@@ -40,7 +40,7 @@ export const Toolbar: React.FC = () => {
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.backgroundColor = "#1d4ed8";
-            e.currentTarget.style.transform = "scale(1.1) translateY(-3px)";
+            e.currentTarget.style.transform = "scale(1.04) translateY(-1px)";
             e.currentTarget.style.boxShadow = "0 12px 32px rgba(37, 99, 235, 0.6)";
           }}
           onMouseLeave={(e) => {
