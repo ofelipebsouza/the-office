@@ -1,4 +1,4 @@
-import { Container, Graphics, Text, TextStyle } from "pixi.js";
+import { Container, Graphics, Text, TextStyle, Assets, Sprite } from "pixi.js";
 import type { RoomId } from "../types/agent";
 
 export interface RoomHotspot {
@@ -69,37 +69,49 @@ const ROOMS: RoomDef[] = [
 export async function setupOfficeScene(
   stage: Container,
   viewWidth: number,
-  viewHeight: number,
+  _viewHeight: number,
   onRoomClick: (roomId: RoomId) => void
 ) {
   const sceneContainer = new Container();
   stage.addChild(sceneContainer);
 
+  let floorTexture = null;
+  try {
+    floorTexture = await Assets.load("/operacao_floor.png");
+  } catch (err) {
+    console.error("Falha ao carregar textura do piso:", err);
+  }
+
   const ox = viewWidth / 2 - (8 - 4) * TILE_W / 2;
   const oy = 40;
   const allCols = 16, allRows = 8;
 
-  // ─ 1. Deep background ───────────────────────────────────────────────────────
+  // ─ 1. Deep background (Expanded infinitely to prevent border gaps) ──────────
   const bgG = new Graphics();
   sceneContainer.addChild(bgG);
-  bgG.rect(0, 0, viewWidth, viewHeight);
+  bgG.rect(-20000, -20000, 40000, 40000);
   bgG.fill({ color: 0x050810 });
 
-  // ─ 2. Subtle Blueprint Grid Lines (Architectural Aesthetic) ─────────────────
+  // ─ 2. Subtle Blueprint Grid Lines (Architectural Aesthetic extended infinitely) ──
   const gridG = new Graphics();
   sceneContainer.addChild(gridG);
   
-  // Draw light technical grid for the whole floor plate
-  for (let col = 0; col <= allCols; col++) {
-    const start = isoToScreen(col, 0, ox, oy);
-    const end = isoToScreen(col, allRows, ox, oy);
+  const minGridCol = -40;
+  const maxGridCol = 60;
+  const minGridRow = -40;
+  const maxGridRow = 60;
+
+  // Draw light technical grid covering a massive area
+  for (let col = minGridCol; col <= maxGridCol; col++) {
+    const start = isoToScreen(col, minGridRow, ox, oy);
+    const end = isoToScreen(col, maxGridRow, ox, oy);
     gridG.moveTo(start.x, start.y);
     gridG.lineTo(end.x, end.y);
     gridG.stroke({ color: 0x1e293b, width: 0.8, alpha: 0.15 });
   }
-  for (let row = 0; row <= allRows; row++) {
-    const start = isoToScreen(0, row, ox, oy);
-    const end = isoToScreen(allCols, row, ox, oy);
+  for (let row = minGridRow; row <= maxGridRow; row++) {
+    const start = isoToScreen(minGridCol, row, ox, oy);
+    const end = isoToScreen(maxGridCol, row, ox, oy);
     gridG.moveTo(start.x, start.y);
     gridG.lineTo(end.x, end.y);
     gridG.stroke({ color: 0x1e293b, width: 0.8, alpha: 0.15 });
@@ -137,9 +149,9 @@ export async function setupOfficeScene(
     const D = isoToScreen(room.startCol, room.startRow + room.rows, ox, oy);
     const fp = [
       A.x, A.y, 
-      B.x + TILE_W, B.y + TILE_H, 
-      C.x, C.y + TILE_H * 2, 
-      D.x - TILE_W, D.y + TILE_H
+      B.x, B.y, 
+      C.x, C.y, 
+      D.x, D.y
     ];
 
     // ── Floor Fill Area ──
@@ -149,7 +161,21 @@ export async function setupOfficeScene(
     // ── Draw blueprint floor tiles inside the room ──
     for (let col = 0; col < room.cols; col++) {
       for (let r = 0; r < room.rows; r++) {
-        drawTile(fG, room.startCol + col, room.startRow + r, ox, oy, room.color, 0.015, room.color, 0.08, 0.4);
+        const targetCol = room.startCol + col;
+        const targetRow = room.startRow + r;
+        if (room.id === "operacao" && floorTexture) {
+          const c = isoToScreen(targetCol, targetRow, ox, oy);
+          const tileSprite = new Sprite(floorTexture);
+          tileSprite.anchor.set(0.5, 0);
+          tileSprite.width = TILE_W * 2;
+          tileSprite.height = TILE_H * 2;
+          tileSprite.x = c.x;
+          tileSprite.y = c.y;
+          tileSprite.alpha = 0.85; // highly textured but fits neon highlighting overlay perfectly
+          fG.addChild(tileSprite);
+        } else {
+          drawTile(fG, targetCol, targetRow, ox, oy, room.color, 0.015, room.color, 0.08, 0.4);
+        }
       }
     }
 
@@ -182,37 +208,25 @@ export async function setupOfficeScene(
     const labelC = new Container();
     labelC.x = cF.x; 
     labelC.y = cF.y + TILE_H;
-    labelC.alpha = 0.72;
+    labelC.alpha = 0.45; // Constant, discrete opacity
     roomC.addChild(labelC);
-
-    const lbg = new Graphics();
-    lbg.roundRect(-66, -15, 132, 28, 8);
-    lbg.fill({ color: 0x050810, alpha: 0.94 });
-    lbg.stroke({ color: room.color, width: 1.4, alpha: 0.85 });
-    labelC.addChild(lbg);
-
-    // Inner accent line inside label
-    const lacc = new Graphics();
-    lacc.roundRect(-64, -13, 128, 4, 4); 
-    lacc.fill({ color: room.color, alpha: 0.3 });
-    labelC.addChild(lacc);
 
     const ltxt = new Text({
       text: room.name.toUpperCase(),
       style: new TextStyle({ 
         fontFamily: "Outfit, Inter, sans-serif", 
-        fontSize: 11, 
+        fontSize: 10, 
         fill: 0xffffff, 
-        fontWeight: "700", 
+        fontWeight: "600", 
         align: "center", 
-        letterSpacing: 1 
+        letterSpacing: 1.2 
       })
     });
     ltxt.anchor.set(0.5);
     labelC.addChild(ltxt);
 
-    hitG.on("pointerover",  () => { drawHover(true);  labelC.alpha = 1; });
-    hitG.on("pointerout",   () => { drawHover(false); labelC.alpha = 0.72; });
+    hitG.on("pointerover",  () => { drawHover(true); });
+    hitG.on("pointerout",   () => { drawHover(false); });
     hitG.on("pointerdown",  () => { onRoomClick(room.id); });
 
     hotspots[room.id] = { id: room.id, graphics: hitG, label: labelC };

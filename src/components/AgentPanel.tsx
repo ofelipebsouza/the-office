@@ -159,16 +159,20 @@ export const AgentPanel: React.FC = () => {
                   onClick={() => useOfficeStore.getState().selectAgent(a.id)}
                   aria-label={`${a.name} — ${meta.label}`}
                   className="card card-hover"
-                  style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", border: "none", cursor: "pointer", textAlign: "left" }}
+                  style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, padding: "6px 8px", border: "none", cursor: "pointer", textAlign: "left" }}
                 >
-                  <div className="avatar" style={{ width: 36, height: 36, fontSize: 12, backgroundColor: `${a.color}18`, borderColor: a.color, color: a.color }}>
-                    {ini}
+                  <div className="avatar" style={{ width: 30, height: 30, fontSize: 11, backgroundColor: `${a.color}18`, borderColor: a.color, color: a.color, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    {a.avatarUrl ? (
+                      <img src={a.avatarUrl} alt={a.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    ) : (
+                      ini
+                    )}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: 13, fontWeight: 600, color: "var(--text-1)", fontFamily: "var(--font-ui)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.name}</p>
-                    <p className="lbl-micro" style={{ color: "var(--text-3)", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{room}</p>
+                    <p style={{ fontSize: 12.5, fontWeight: 600, color: "var(--text-1)", fontFamily: "var(--font-ui)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.name}</p>
+                    <p className="lbl-micro" style={{ color: "var(--text-3)", marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{room}</p>
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0, background: `${meta.color}12`, border: `1px solid ${meta.color}28`, padding: "4px 8px", borderRadius: 8 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 5, flexShrink: 0, background: `${meta.color}12`, border: `1px solid ${meta.color}28`, padding: "3px 6px", borderRadius: 6 }}>
                     <span className={`sdot ${meta.dot} anim-pulse-dot`} />
                     <span className="lbl-micro" style={{ color: meta.color }}>{meta.label.slice(0,6)}</span>
                   </div>
@@ -198,59 +202,86 @@ export const AgentPanel: React.FC = () => {
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
 
       {/* Header */}
-      <div style={{ padding: "12px 14px", borderBottom: "1px solid var(--border)", flexShrink: 0 }}>
-        <div style={{ display: "flex", alignItems: "flex-start", gap: 10, justifyContent: "space-between" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
-            <div className="avatar" style={{ width: 40, height: 40, fontSize: 13, backgroundColor: `${agent.color}18`, borderColor: agent.color, color: agent.color, flexShrink: 0 }}>
-              {ini}
+      <div style={{ padding: "8px 10px", borderBottom: "1px solid var(--border)", flexShrink: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, justifyContent: "space-between" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1, minWidth: 0 }}>
+            <div className="avatar" style={{ width: 32, height: 32, fontSize: 11, backgroundColor: `${agent.color}18`, borderColor: agent.color, color: agent.color, flexShrink: 0, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              {agent.avatarUrl ? (
+                <img src={agent.avatarUrl} alt={agent.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              ) : (
+                ini
+              )}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                <h3 style={{ fontSize: 14, fontWeight: 700, color: "var(--text-1)", fontFamily: "var(--font-ui)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{agent.name}</h3>
-                <span style={{ display: "flex", alignItems: "center", gap: 5, background: `${meta.color}12`, border: `1px solid ${meta.color}30`, padding: "2px 8px", borderRadius: 7 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                <h3 style={{ fontSize: 13, fontWeight: 700, color: "var(--text-1)", fontFamily: "var(--font-ui)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{agent.name}</h3>
+                <span style={{ display: "flex", alignItems: "center", gap: 4, background: `${meta.color}12`, border: `1px solid ${meta.color}30`, padding: "2px 6px", borderRadius: 6 }}>
                   <span className={`sdot ${meta.dot}`} />
                   <span className="lbl-micro" style={{ color: meta.color }}>{meta.label}</span>
                 </span>
               </div>
-              <p className="lbl-micro" style={{ color: "var(--text-3)", marginTop: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{agent.role}</p>
+              <p className="lbl-micro" style={{ color: "var(--text-3)", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{agent.role}</p>
             </div>
           </div>
           <button
             onClick={() => useOfficeStore.getState().selectAgent(null)}
             aria-label="Fechar painel"
-            style={{ width: 28, height: 28, borderRadius: 8, background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-3)", cursor: "pointer", flexShrink: 0, transition: "all 150ms" }}
+            style={{ width: 24, height: 24, borderRadius: 6, background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-3)", cursor: "pointer", flexShrink: 0, transition: "all 150ms" }}
           >
-            <X size={13} />
+            <X size={12} />
           </button>
         </div>
       </div>
 
       {/* Tabs */}
       <div style={{ padding: "8px 10px 0", flexShrink: 0 }}>
-        <div className="tab-list" role="tablist">
-          {TABS.map(t => (
-            <button key={t.id} role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)} className="tab-btn">
-              {t.icon} {t.label}
-            </button>
-          ))}
+        <div className="tab-list" role="tablist" style={{ overflow: "hidden" }}>
+          {TABS.map(t => {
+            const isSelected = tab === t.id;
+            return (
+              <button
+                key={t.id}
+                role="tab"
+                aria-selected={isSelected}
+                onClick={() => setTab(t.id)}
+                className="tab-btn"
+                style={{
+                  flex: isSelected ? "2.2" : "1",
+                  transition: "all 200ms cubic-bezier(0.4, 0, 0.2, 1)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: isSelected ? "5px" : "0px",
+                  overflow: "hidden",
+                }}
+              >
+                {t.icon}
+                {isSelected && (
+                  <span className="anim-fade-up" style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.2px", whiteSpace: "nowrap" }}>
+                    {t.label}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
       </div>
 
       {/* Content */}
-      <div style={{ flex: 1, overflowY: "auto", padding: "12px 12px" }}>
+      <div style={{ flex: 1, overflowY: "auto", padding: "10px 10px" }}>
 
         {tab === "control" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 14 }} className="anim-fade-up">
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }} className="anim-fade-up">
 
             {/* Current task */}
             <div>
-              <p className="lbl-micro" style={{ color: "var(--text-3)", marginBottom: 8 }}>Tarefa atual</p>
-              <div className="card" style={{ padding: "12px" }}>
-                <div style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 10 }}>
-                  <CheckCircle2 size={14} color="#60a5fa" style={{ flexShrink: 0, marginTop: 1 }} />
-                  <p style={{ fontSize: 12, color: "var(--text-1)", lineHeight: 1.5, fontFamily: "var(--font-body)" }}>{agent.currentTask ?? "Processamento em background"}</p>
+              <p className="lbl-micro" style={{ color: "var(--text-3)", marginBottom: 6 }}>Tarefa atual</p>
+              <div className="card" style={{ padding: "10px" }}>
+                <div style={{ display: "flex", alignItems: "flex-start", gap: 6, marginBottom: 8 }}>
+                  <CheckCircle2 size={13} color="#60a5fa" style={{ flexShrink: 0, marginTop: 1 }} />
+                  <p style={{ fontSize: 11.5, color: "var(--text-1)", lineHeight: 1.45, fontFamily: "var(--font-body)" }}>{agent.currentTask ?? "Processamento em background"}</p>
                 </div>
-                <div className="prog-track" style={{ marginBottom: 6 }}>
+                <div className="prog-track" style={{ marginBottom: 5 }}>
                   <div className={`prog-fill ${agent.status === "working" ? "active" : ""}`} style={{ width: `${prog}%` }} role="progressbar" aria-valuenow={prog} aria-valuemin={0} aria-valuemax={100} />
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
@@ -262,8 +293,8 @@ export const AgentPanel: React.FC = () => {
 
             {/* Move buttons */}
             <div>
-              <p className="lbl-micro" style={{ color: "var(--text-3)", marginBottom: 8 }}>Deslocar para</p>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+              <p className="lbl-micro" style={{ color: "var(--text-3)", marginBottom: 6 }}>Deslocar para</p>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 5 }}>
                 {MOVES.map(mv => {
                   const isCurrent = agent.room === mv.id;
                   return (
@@ -273,17 +304,17 @@ export const AgentPanel: React.FC = () => {
                       aria-label={`Mover para ${mv.label}`}
                       disabled={isCurrent}
                       style={{
-                        display: "flex", alignItems: "center", gap: 7, padding: "9px 10px",
-                        borderRadius: 10, cursor: isCurrent ? "default" : "pointer",
+                        display: "flex", alignItems: "center", gap: 6, padding: "6px 8px",
+                        borderRadius: 8, cursor: isCurrent ? "default" : "pointer",
                         background: isCurrent ? "rgba(255,255,255,0.03)" : `${mv.color}10`,
                         border: `1px solid ${isCurrent ? "rgba(255,255,255,0.06)" : `${mv.color}28`}`,
                         color: isCurrent ? "var(--text-3)" : mv.color,
-                        fontSize: 12, fontWeight: 600, fontFamily: "var(--font-ui)",
+                        fontSize: 11, fontWeight: 600, fontFamily: "var(--font-ui)",
                         transition: "all 150ms",
                         opacity: isCurrent ? 0.6 : 1,
                       }}
                     >
-                      {isCurrent ? <Circle size={13} style={{ opacity: 0.4 }} /> : mv.icon}
+                      {isCurrent ? <Circle size={11} style={{ opacity: 0.4 }} /> : mv.icon}
                       <span style={{ flex: 1 }}>{mv.label}</span>
                       {isCurrent && <span className="lbl-micro" style={{ color: "var(--text-3)" }}>aqui</span>}
                     </button>

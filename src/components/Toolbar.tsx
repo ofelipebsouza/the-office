@@ -1,7 +1,7 @@
 import React from "react";
 import { useOfficeStore } from "../store/useOfficeStore";
 import type { RoomId } from "../types/agent";
-import { Briefcase, Users, Coffee, MapPin, Layout } from "lucide-react";
+import { Briefcase, Users, Coffee, MapPin, Layout, Crosshair, Minimize2 } from "lucide-react";
 
 const ROOM_ICONS: Record<string, React.ReactNode> = {
   recepcao:  <MapPin    size={12} />,
@@ -12,7 +12,8 @@ const ROOM_ICONS: Record<string, React.ReactNode> = {
 };
 
 export const Toolbar: React.FC = () => {
-  const { rooms, selectedRoomId, selectRoom, selectAgent, agents, triggerAgentMove } = useOfficeStore();
+  const { rooms, selectedRoomId, selectRoom, selectAgent, agents, triggerAgentMove, 
+    cameraAutoFocus, setCameraAutoFocus, resetCamera } = useOfficeStore();
 
   const handleRoom = (id: RoomId | null) => { selectRoom(id); selectAgent(null); };
   const convocarReuniao  = () => agents.forEach(a => triggerAgentMove(a.id, "reuniao"));
@@ -25,9 +26,9 @@ export const Toolbar: React.FC = () => {
   const count = (id: string) => agents.filter(a => a.room === id).length;
 
   const btn = (active: boolean, accent: string) => ({
-    display: "flex" as const, alignItems: "center" as const, gap: 6,
-    padding: "5px 12px", borderRadius: 9, cursor: "pointer" as const,
-    fontSize: 11, fontWeight: 700, fontFamily: "var(--font-ui)",
+    display: "flex" as const, alignItems: "center" as const, gap: 5,
+    padding: "4px 10px", borderRadius: 7, cursor: "pointer" as const,
+    fontSize: 10.5, fontWeight: 700, fontFamily: "var(--font-ui)",
     flexShrink: 0, whiteSpace: "nowrap" as const,
     border: `1px solid ${active ? `${accent}50` : "rgba(255,255,255,0.07)"}`,
     background: active ? `${accent}18` : "rgba(255,255,255,0.04)",
@@ -40,9 +41,9 @@ export const Toolbar: React.FC = () => {
       role="toolbar"
       aria-label="Controles do escritório"
       style={{
-        height: 52, flexShrink: 0,
-        display: "flex", alignItems: "center", gap: 6,
-        padding: "0 14px",
+        height: 44, flexShrink: 0,
+        display: "flex", alignItems: "center", gap: 5,
+        padding: "0 10px",
         background: "rgba(4,6,14,0.96)",
         backdropFilter: "blur(20px)",
         borderTop: "1px solid rgba(255,255,255,0.06)",
@@ -50,7 +51,7 @@ export const Toolbar: React.FC = () => {
       }}
     >
       {/* Separator label */}
-      <span className="lbl-micro" style={{ color: "var(--text-3)", display: "flex", alignItems: "center", gap: 4, flexShrink: 0, marginRight: 4 }} aria-hidden>
+      <span className="lbl-micro hidden-mobile" style={{ color: "var(--text-3)", display: "flex", alignItems: "center", gap: 4, flexShrink: 0, marginRight: 4 }} aria-hidden>
         <MapPin size={11} /> Salas
       </span>
 
@@ -88,8 +89,8 @@ export const Toolbar: React.FC = () => {
       })}
 
       {/* Divider */}
-      <span style={{ width: 1, height: 20, background: "rgba(255,255,255,0.08)", margin: "0 4px", flexShrink: 0 }} aria-hidden />
-      <span className="lbl-micro" style={{ color: "var(--text-3)", display: "flex", alignItems: "center", gap: 4, flexShrink: 0, marginRight: 4 }} aria-hidden>
+      <span className="hidden-mobile" style={{ width: 1, height: 20, background: "rgba(255,255,255,0.08)", margin: "0 4px", flexShrink: 0 }} aria-hidden />
+      <span className="lbl-micro hidden-mobile" style={{ color: "var(--text-3)", display: "flex", alignItems: "center", gap: 4, flexShrink: 0, marginRight: 4 }} aria-hidden>
         <Layout size={11} /> Ações
       </span>
 
@@ -102,6 +103,32 @@ export const Toolbar: React.FC = () => {
       </button>
       <button onClick={horaDoCafe} aria-label="Hora do café" style={btn(false, "#818cf8")}>
         <Coffee size={12} /> <span>Café</span>
+      </button>
+
+      {/* Divider */}
+      <span className="hidden-mobile" style={{ width: 1, height: 20, background: "rgba(255,255,255,0.08)", margin: "0 4px", flexShrink: 0 }} aria-hidden />
+      <span className="lbl-micro hidden-mobile" style={{ color: "var(--text-3)", display: "flex", alignItems: "center", gap: 4, flexShrink: 0, marginRight: 4 }} aria-hidden>
+        <Crosshair size={11} /> Câmera
+      </span>
+
+      {/* Auto-focus */}
+      <button 
+        onClick={() => setCameraAutoFocus(!cameraAutoFocus)} 
+        aria-pressed={cameraAutoFocus} 
+        style={btn(cameraAutoFocus, "#3b82f6")}
+      >
+        <Crosshair size={12} className={cameraAutoFocus ? "animate-pulse" : ""} />
+        <span>{cameraAutoFocus ? "Auto" : "Manual"}</span>
+      </button>
+
+      {/* Reset */}
+      <button 
+        onClick={resetCamera} 
+        style={btn(false, "#64748b")}
+        title="Resetar câmera para visão geral"
+      >
+        <Minimize2 size={12} />
+        <span>Visão Geral</span>
       </button>
     </nav>
   );

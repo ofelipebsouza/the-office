@@ -23,10 +23,15 @@ export function createCameraController(
   height: number
 ): CameraController {
   // ── Smooth-target state (auto-focus / programmatic) ────────────────────────
-  let targetX     = 0;
-  let targetY     = 0;
   let targetScale = 1.0;
+  let targetX     = width / 2 - 728 * targetScale;
+  let targetY     = height / 2 - 424 * targetScale;
   let autoFocus   = true;
+
+  // Initialize stage centered immediately on mount
+  stage.x = targetX;
+  stage.y = targetY;
+  stage.scale.set(targetScale);
 
   // ── Manual drag state ──────────────────────────────────────────────────────
   let isDragging     = false;
@@ -81,9 +86,9 @@ export function createCameraController(
     },
 
     reset() {
-      targetX     = 0;
-      targetY     = 0;
       targetScale = 1.0;
+      targetX     = width  / 2 - 728 * targetScale;
+      targetY     = height / 2 - 424 * targetScale;
     },
 
     update(delta) {

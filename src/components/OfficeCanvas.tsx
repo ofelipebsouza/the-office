@@ -7,7 +7,7 @@ import { setupAgents, AgentToken } from "../game/agents";
 import { createCameraController } from "../game/interactions";
 import type { CameraController } from "../game/interactions";
 import type { RoomId } from "../types/agent";
-import { Minimize2, Crosshair, HelpCircle } from "lucide-react";
+import { HelpCircle } from "lucide-react";
 
 const HINT_KEY = "office_hint_seen";
 
@@ -18,11 +18,10 @@ export const OfficeCanvas: React.FC = () => {
   const tokensRef     = useRef<Record<string, AgentToken>>({});
   const cleanupRef    = useRef<(() => void) | null>(null);
 
-  const [autoFocus, setAutoFocus]   = useState(true);
   const [showHint,  setShowHint]    = useState(false);
 
   const { agents, rooms, selectedAgentId, selectedRoomId, selectAgent, selectRoom,
-    updateAgentPosition, setAgentTargetPosition, addAgentLog } = useOfficeStore();
+    updateAgentPosition, setAgentTargetPosition, addAgentLog, cameraAutoFocus, triggerCameraReset } = useOfficeStore();
 
   // Show hint on first visit
   useEffect(() => {
@@ -86,59 +85,37 @@ export const OfficeCanvas: React.FC = () => {
     agents.forEach(agent => tokensRef.current[agent.id]?.updateAgentData(agent));
   }, [agents]);
 
-  // Auto-focus camera
+  // Auto-focus camera setting
   useEffect(() => {
     if (!cameraRef.current) return;
-    cameraRef.current.setAutoFocus(autoFocus);
-    if (!autoFocus) return;
+    cameraRef.current.setAutoFocus(cameraAutoFocus);
+  }, [cameraAutoFocus]);
+
+  // Auto-focus zoom on selection
+  useEffect(() => {
+    if (!cameraRef.current || !cameraAutoFocus) return;
     if (selectedAgentId) {
       const agent = agents.find(a => a.id === selectedAgentId);
-      if (agent) { cameraRef.current.zoomTo(agent.position.x, agent.position.y, 1.5); return; }
-    }
-    if (selectedRoomId) {
+      if (agent) { cameraRef.current.zoomTo(agent.position.x, agent.position.y, 1.5); }
+    } else if (selectedRoomId) {
       const room = rooms.find(r => r.id === selectedRoomId);
-      if (room) { cameraRef.current.zoomTo(room.centerPos.x, room.centerPos.y, 1.25); return; }
+      if (room) { cameraRef.current.zoomTo(room.centerPos.x, room.centerPos.y, 1.25); }
     }
+  }, [selectedAgentId, selectedRoomId, agents, rooms, cameraAutoFocus]);
+
+  // Handle camera reset trigger from store
+  useEffect(() => {
+    if (!cameraRef.current || triggerCameraReset === 0) return;
     cameraRef.current.reset();
-  }, [selectedAgentId, selectedRoomId, agents, rooms, autoFocus]);
+  }, [triggerCameraReset]);
 
   return (
-    <div className="relative w-full h-full bg-[#050810] overflow-hidden">
+    <div style={{ position: "relative", width: "100%", height: "100%", backgroundColor: "#050810", overflow: "hidden" }}>
 
       {/* Canvas */}
-      <div ref={containerRef} className="w-full h-full" aria-label="Escritório virtual isométrico" role="img" />
+      <div ref={containerRef} style={{ width: "100%", height: "100%" }} aria-label="Escritório virtual isométrico" role="img" />
 
-      {/* Controls FAB — bottom right */}
-      <div className="absolute bottom-4 right-4 flex flex-col items-end gap-2 z-20">
 
-        {/* Auto-focus toggle */}
-        <button
-          id="btn-autofocus"
-          onClick={() => { const n = !autoFocus; setAutoFocus(n); cameraRef.current?.setAutoFocus(n); }}
-          aria-label={autoFocus ? "Desativar foco automático" : "Ativar foco automático"}
-          aria-pressed={autoFocus}
-          title={autoFocus ? "Foco AUTO ativado" : "Foco manual"}
-          className={`flex items-center gap-2 px-3 h-9 rounded-xl text-xs font-bold font-ui tracking-wide border transition-all shadow-lg shadow-black/50 ${
-            autoFocus
-              ? "bg-blue-600/95 border-blue-500/40 text-white"
-              : "bg-[#0b0f1a]/95 border-white/10 text-slate-400 hover:text-slate-200"
-          }`}
-        >
-          <Crosshair size={13} className={autoFocus ? "animate-pulse" : ""} />
-          <span>{autoFocus ? "AUTO" : "LIVRE"}</span>
-        </button>
-
-        {/* Reset camera */}
-        <button
-          id="btn-reset-camera"
-          onClick={() => { selectAgent(null); selectRoom(null); cameraRef.current?.reset(); }}
-          aria-label="Resetar câmera para visão geral"
-          title="Visão geral"
-          className="flex items-center justify-center w-9 h-9 rounded-xl bg-[#0b0f1a]/95 border border-white/10 text-slate-400 hover:text-slate-200 transition-all shadow-lg shadow-black/50"
-        >
-          <Minimize2 size={14} />
-        </button>
-      </div>
 
       {/* First-time hint overlay */}
       {showHint && (

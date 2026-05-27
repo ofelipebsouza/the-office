@@ -27,6 +27,7 @@ export interface VirtualAgent {
   };
   color: string; // Theme color (e.g. hex or tailwind class)
   avatarAsset: string;
+  avatarUrl?: string;
   currentTask?: string;
   bio: string;
   skills: string[];

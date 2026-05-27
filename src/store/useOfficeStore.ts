@@ -7,9 +7,15 @@ interface OfficeState {
   selectedAgentId: string | null;
   selectedRoomId: RoomId | null;
   
+  // Camera State
+  cameraAutoFocus: boolean;
+  triggerCameraReset: number;
+  
   // Actions
   selectAgent: (id: string | null) => void;
   selectRoom: (id: RoomId | null) => void;
+  setCameraAutoFocus: (enabled: boolean) => void;
+  resetCamera: () => void;
   updateAgentStatus: (id: string, status: AgentStatus) => void;
   updateAgentPosition: (id: string, pos: { x: number; y: number }) => void;
   setAgentTargetPosition: (id: string, targetPos: { x: number; y: number } | null) => void;
@@ -38,6 +44,7 @@ const INITIAL_AGENTS: VirtualAgent[] = [
     targetPosition: null,
     color: "#ec4899", // Pink
     avatarAsset: "ceo",
+    avatarUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80",
     currentTask: "Modelando roadmap de arquitetura multiagente para Q3",
     bio: "Lidera a visão estratégica e alocação de recursos de inteligência do escritório virtual. Especialista em identificar oportunidades de mercado e conectar fluxos complexos.",
     skills: ["Strategic Planning", "Resource Optimization", "Multi-Agent System Design", "SaaS Growth"],
@@ -61,6 +68,7 @@ const INITIAL_AGENTS: VirtualAgent[] = [
     targetPosition: null,
     color: "#3b82f6", // Blue
     avatarAsset: "support",
+    avatarUrl: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80",
     currentTask: "Respondendo tickets de alta prioridade na fila do suporte",
     bio: "Interage diretamente com usuários, resolve problemas e monitora o nível de satisfação em tempo real. Sempre atenciosa, ágil e focada em NPS elevado.",
     skills: ["User Relations", "Sentiment Analysis", "Ticket Resolution", "CRM Integration"],
@@ -84,6 +92,7 @@ const INITIAL_AGENTS: VirtualAgent[] = [
     targetPosition: null,
     color: "#a855f7", // Purple
     avatarAsset: "designer",
+    avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
     currentTask: "Iterando no layout da dashboard corporativa com glassmorphism",
     bio: "Garante que a interface e a experiência de usuário sejam impecáveis, intuitivas e esteticamente deslumbrantes. Especialista em micro-animações.",
     skills: ["Figma Design", "User Flow Mapping", "Visual Aesthetics", "Design Systems"],
@@ -107,6 +116,7 @@ const INITIAL_AGENTS: VirtualAgent[] = [
     targetPosition: null,
     color: "#10b981", // Green
     avatarAsset: "developer",
+    avatarUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
     currentTask: "Otimizando indexação de busca vetorial em banco de dados de alta densidade",
     bio: "Escreve código limpo, otimiza consultas de banco de dados e cria APIs de alta performance. Adora hoodies e café forte.",
     skills: ["Node.js", "TypeScript", "PostgreSQL", "API Architectures", "Docker"],
@@ -130,6 +140,7 @@ const INITIAL_AGENTS: VirtualAgent[] = [
     targetPosition: null,
     color: "#f59e0b", // Amber
     avatarAsset: "analyst",
+    avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
     currentTask: "Processando logs de comportamento dos agentes para extração de eficiência",
     bio: "Processa volumes massivos de dados, cria gráficos elegantes e extrai insights acionáveis que moldam o desenvolvimento de IA do produto.",
     skills: ["Python", "Pandas", "SQL", "Tableau", "Data Mining"],
@@ -153,6 +164,7 @@ const INITIAL_AGENTS: VirtualAgent[] = [
     targetPosition: null,
     color: "#ef4444", // Red
     avatarAsset: "finance",
+    avatarUrl: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80",
     currentTask: "Ajustando alocação de créditos na AWS e OpenAI para conter estouros",
     bio: "Controla as finanças, otimiza os custos de infraestrutura em nuvem e garante o ROI positivo de todas as operações automatizadas.",
     skills: ["Financial Planning", "Cost Control", "Cloud Billing Optimization", "Auditing"],
@@ -176,6 +188,7 @@ const INITIAL_AGENTS: VirtualAgent[] = [
     targetPosition: null,
     color: "#06b6d4", // Cyan
     avatarAsset: "pm",
+    avatarUrl: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80",
     currentTask: "Conduzindo retrospectiva da sprint e documentando gargalos",
     bio: "Orquestra as sprints, remove impedimentos e garante que todas as entregas ocorram no prazo acordado com extrema qualidade metodológica.",
     skills: ["Sprint Planning", "Jira Architecture", "Agile Methodologies", "Risk Management"],
@@ -199,6 +212,7 @@ const INITIAL_AGENTS: VirtualAgent[] = [
     targetPosition: null,
     color: "#6366f1", // Indigo
     avatarAsset: "copilot",
+    avatarUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=150&auto=format&fit=crop&q=80",
     currentTask: "Executando loop de otimização de pesos locais no modelo complementar",
     bio: "A inteligência central integrada do escritório. Monitora a integridade de infraestrutura de LLMs, resume reuniões e auxilia no raciocínio rápido dos agentes.",
     skills: ["LLM Orchestration", "Semantic Search", "Prompt Engineering", "Anomaly Detection"],
@@ -219,6 +233,12 @@ export const useOfficeStore = create<OfficeState>((set, get) => ({
   rooms: INITIAL_ROOMS,
   selectedAgentId: null,
   selectedRoomId: null,
+  
+  // Camera State
+  cameraAutoFocus: true,
+  triggerCameraReset: 0,
+  setCameraAutoFocus: (enabled) => set({ cameraAutoFocus: enabled }),
+  resetCamera: () => set((state) => ({ triggerCameraReset: state.triggerCameraReset + 1 })),
 
   selectAgent: (id) => {
     set({ selectedAgentId: id });

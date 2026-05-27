@@ -48,10 +48,10 @@ const STATUS_DOT: Record<string, string> = {
 };
 
 /* ─── Sidebar inner width constants (used in inline width of wrapper + inner) ─ */
-const LEFT_W  = 264;
-const RIGHT_W = 300;
-const HEADER_H = 52;
-const CAMS_H   = 96;
+// const _LEFT_W  = 264;
+// const _RIGHT_W = 300;
+const HEADER_H = 44;
+const CAMS_H   = 80;
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
 export default function App() {
@@ -66,6 +66,67 @@ export default function App() {
   const [busy,      setBusy]      = useState(false);
   const [mobileTab, setMobileTab] = useState<"map" | "team" | "hud">("map");
   const [sheetOpen, setSheetOpen] = useState(false);
+
+  // Resizable sidebars state
+  const [leftWidth, setLeftWidth] = useState(220); // Default reduced from 264 to 220
+  const [rightWidth, setRightWidth] = useState(260); // Default reduced from 300 to 260
+  const [isResizing, setIsResizing] = useState(false);
+
+  const startLeftResize = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+    const startX = e.clientX;
+    const startWidth = leftWidth;
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const deltaX = moveEvent.clientX - startX;
+      const newWidth = Math.min(Math.max(startWidth + deltaX, 190), 340);
+      setLeftWidth(newWidth);
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+      document.body.style.cursor = "default";
+    };
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+    document.body.style.cursor = "col-resize";
+  };
+
+  const startRightResize = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+    const startX = e.clientX;
+    const startWidth = rightWidth;
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const deltaX = moveEvent.clientX - startX;
+      const newWidth = Math.min(Math.max(startWidth - deltaX, 210), 380);
+      setRightWidth(newWidth);
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+      document.body.style.cursor = "default";
+    };
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+    document.body.style.cursor = "col-resize";
+  };
+
+  // Auto-open mobile panel when selecting an agent
+  useEffect(() => {
+    if (selectedAgentId && window.innerWidth < 768) {
+      setMobileTab("team");
+      setSheetOpen(true);
+    }
+  }, [selectedAgentId]);
   const [depts,     setDepts]     = useState<Record<string, boolean>>({
     socios: true, trafego: false, financeiro: false, comercial: false, tecnologia: true,
   });
@@ -116,8 +177,8 @@ export default function App() {
   const activeAgents  = agents.filter(a => a.status !== "offline").length;
 
   /* ── Layout helpers ─────────────────────────────────────────────────────── */
-  const leftW  = leftOpen  && !cinema ? LEFT_W  : 0;
-  const rightW = rightOpen && !cinema ? RIGHT_W : 0;
+  const leftW  = leftOpen  && !cinema ? leftWidth  : 0;
+  const rightW = rightOpen && !cinema ? rightWidth : 0;
 
   const DEPT_ITEMS = [
     { key: "socios",     label: "Sócios",        icon: <Crown size={14} weight="duotone" />, color: "#ec4899", agents: [{ id: "1", name: "Sarah",   role: "CEO" }, { id: "6", name: "Rodrigo", role: "CFO" }] },
@@ -154,18 +215,18 @@ export default function App() {
         aria-label="Barra de navegação"
       >
         {/* Brand */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
-          <div style={{ width: 32, height: 32, borderRadius: 10, background: "rgba(59,130,246,0.12)", border: "1px solid rgba(59,130,246,0.25)", display: "flex", alignItems: "center", justifyContent: "center", color: "#60a5fa" }}>
-            <Sparkles size={15} />
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+          <div style={{ width: 28, height: 28, borderRadius: 8, background: "rgba(59,130,246,0.12)", border: "1px solid rgba(59,130,246,0.25)", display: "flex", alignItems: "center", justifyContent: "center", color: "#60a5fa" }}>
+            <Sparkles size={13} />
           </div>
           <div>
-            <p className="lbl-caps" style={{ color: "var(--text-1)", fontSize: 11 }}>The Office · AI Workspace</p>
-            <p className="lbl-micro" style={{ color: "var(--text-3)", marginTop: 2 }}>Agentes Autônomos em Tempo Real</p>
+            <p className="lbl-caps" style={{ color: "var(--text-1)", fontSize: 10.5, lineHeight: 1.15 }}>The Office · AI Workspace</p>
+            <p className="lbl-micro" style={{ color: "var(--text-3)", marginTop: 1, fontSize: 8 }}>Agentes Autônomos em Tempo Real</p>
           </div>
         </div>
 
         {/* Center pill */}
-        <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)", borderRadius: 10, padding: "5px 12px" }} className="hidden-mobile">
+        <div style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)", borderRadius: 8, padding: "4px 8px" }} className="hidden-mobile">
           <Activity size={11} color="#34d399" />
           <span className="lbl-micro" style={{ color: "#34d399" }}>Rede Estável</span>
           <span className="sdot s-working anim-pulse-dot" />
@@ -271,23 +332,27 @@ export default function App() {
                   aria-label={`${agent.name} — ${STATUS_LABEL[agent.status]}`}
                   aria-pressed={isSel}
                   style={{
-                    flexShrink: 0, minWidth: 68,
-                    display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
-                    padding: "8px 6px", borderRadius: 12, cursor: "pointer",
+                    flexShrink: 0, minWidth: 58,
+                    display: "flex", flexDirection: "column", alignItems: "center", gap: 2,
+                    padding: "6px 4px", borderRadius: 8, cursor: "pointer",
                     background: isSel ? "rgba(59,130,246,0.1)" : "rgba(255,255,255,0.03)",
                     border: `1px solid ${isSel ? "rgba(59,130,246,0.5)" : "rgba(255,255,255,0.07)"}`,
                     transition: "all 150ms",
                   }}
                 >
-                  <div className="avatar" style={{ width: 34, height: 34, fontSize: 11, backgroundColor: `${agent.color}18`, borderColor: agent.color, color: agent.color }}>
-                    {initials}
+                  <div className="avatar" style={{ width: 28, height: 28, fontSize: 10, backgroundColor: `${agent.color}18`, borderColor: agent.color, color: agent.color, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    {agent.avatarUrl ? (
+                      <img src={agent.avatarUrl} alt={agent.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    ) : (
+                      initials
+                    )}
                   </div>
-                  <span className="lbl-micro" style={{ color: "var(--text-2)", maxWidth: 64, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <span className="lbl-micro" style={{ color: "var(--text-2)", maxWidth: 54, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontSize: 8.5 }}>
                     {agent.name.split(" ")[0]}
                   </span>
-                  <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                    <span className={`sdot ${STATUS_DOT[agent.status] ?? "s-offline"}`} />
-                    <span className="lbl-micro" style={{ color: "var(--text-3)", fontSize: 8 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
+                    <span className={`sdot ${STATUS_DOT[agent.status] ?? "s-offline"}`} style={{ width: 5, height: 5 }} />
+                    <span className="lbl-micro" style={{ color: "var(--text-3)", fontSize: 7.5 }}>
                       {STATUS_LABEL[agent.status]?.slice(0, 5)}
                     </span>
                   </div>
@@ -309,15 +374,15 @@ export default function App() {
             width: `${leftW}px`,
             flexShrink: 0,
             overflow: "hidden",
-            transition: "width 0.3s cubic-bezier(0.4,0,0.2,1)",
+            transition: isResizing ? "none" : "width 0.3s cubic-bezier(0.4,0,0.2,1)",
             borderRight: leftW > 0 ? "1px solid var(--border)" : "none",
           }}
           aria-label="Departamentos"
           aria-hidden={leftW === 0}
           className="desktop-only"
         >
-          {/* Inner fixed-width container so content doesn't squish */}
-          <div style={{ width: LEFT_W, height: "100%", display: "flex", flexDirection: "column", background: "rgba(8,11,20,0.92)", overflowY: "auto" }}>
+          {/* Inner resizable container */}
+          <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", background: "rgba(8,11,20,0.92)", overflowY: "auto" }}>
 
             {/* Sidebar header */}
             <div style={{ padding: "14px 14px 10px", borderBottom: "1px solid var(--border)", flexShrink: 0 }}>
@@ -397,6 +462,24 @@ export default function App() {
           </div>
         </aside>
 
+        {/* LEFT RESIZE HANDLE */}
+        {leftW > 0 && (
+          <div
+            onMouseDown={startLeftResize}
+            style={{
+              width: "4px",
+              cursor: "col-resize",
+              flexShrink: 0,
+              zIndex: 35,
+              background: "transparent",
+              transition: "background 150ms",
+              borderRight: "1px solid var(--border)",
+              position: "relative",
+            }}
+            className="resize-handle"
+          />
+        )}
+
         {/* ─── CENTER: CANVAS + TOOLBAR ───────────────────────────────────── */}
         <main style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", overflow: "hidden" }} aria-label="Escritório virtual">
           {/* Canvas fills all remaining height */}
@@ -407,20 +490,38 @@ export default function App() {
           {!cinema && <Toolbar />}
         </main>
 
+        {/* RIGHT RESIZE HANDLE */}
+        {rightW > 0 && (
+          <div
+            onMouseDown={startRightResize}
+            style={{
+              width: "4px",
+              cursor: "col-resize",
+              flexShrink: 0,
+              zIndex: 35,
+              background: "transparent",
+              transition: "background 150ms",
+              borderLeft: "1px solid var(--border)",
+              position: "relative",
+            }}
+            className="resize-handle"
+          />
+        )}
+
         {/* ─── RIGHT SIDEBAR: HUD / AGENT PANEL ──────────────────────────── */}
         <aside
           style={{
             width: `${rightW}px`,
             flexShrink: 0,
             overflow: "hidden",
-            transition: "width 0.3s cubic-bezier(0.4,0,0.2,1)",
+            transition: isResizing ? "none" : "width 0.3s cubic-bezier(0.4,0,0.2,1)",
             borderLeft: rightW > 0 ? "1px solid var(--border)" : "none",
           }}
           aria-label={selectedAgent ? `Painel — ${selectedAgent.name}` : "Monitor"}
           aria-hidden={rightW === 0}
           className="desktop-only"
         >
-          <div style={{ width: RIGHT_W, height: "100%", display: "flex", flexDirection: "column", background: "rgba(8,11,20,0.92)" }}>
+          <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", background: "rgba(8,11,20,0.92)" }}>
 
             {selectedAgent ? (
               /* Agent Panel */
@@ -440,16 +541,39 @@ export default function App() {
                 </div>
 
                 <div style={{ padding: "8px 10px 0", flexShrink: 0 }}>
-                  <div className="tab-list" role="tablist">
+                  <div className="tab-list" role="tablist" style={{ overflow: "hidden" }}>
                     {([
                       { id: "ranking", icon: <Award  size={11} />, label: "Ranking" },
                       { id: "jobs",    icon: <Play   size={11} />, label: "Jobs"    },
                       { id: "aegis",   icon: <Shield size={11} />, label: "Aegis"   },
-                    ] as const).map(t => (
-                      <button key={t.id} role="tab" aria-selected={hudTab === t.id} onClick={() => setHudTab(t.id)} className="tab-btn">
-                        {t.icon} {t.label}
-                      </button>
-                    ))}
+                    ] as const).map(t => {
+                      const isSelected = hudTab === t.id;
+                      return (
+                        <button
+                          key={t.id}
+                          role="tab"
+                          aria-selected={isSelected}
+                          onClick={() => setHudTab(t.id)}
+                          className="tab-btn"
+                          style={{
+                            flex: isSelected ? "2" : "1",
+                            transition: "all 200ms cubic-bezier(0.4, 0, 0.2, 1)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: isSelected ? "5px" : "0px",
+                            overflow: "hidden",
+                          }}
+                        >
+                          {t.icon}
+                          {isSelected && (
+                            <span className="anim-fade-up" style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.2px", whiteSpace: "nowrap" }}>
+                              {t.label}
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -478,7 +602,7 @@ export default function App() {
           borderTop: "1px solid var(--border-md)",
           paddingBottom: "env(safe-area-inset-bottom, 0px)",
         }}
-        className="mobile-bottomnav"
+        className="mobile-nav"
       >
         {([
           { id: "map",  icon: <Map size={22} />,            label: "Mapa",    badge: 0 },
@@ -565,12 +689,12 @@ function HeaderBtn({ active, onClick, icon, label, hideOnMobile, ...rest }: {
       {...rest}
       className={hideOnMobile ? "desktop-only" : ""}
       style={{
-        display: "flex", alignItems: "center", gap: 6,
-        padding: "5px 10px", borderRadius: 9, cursor: "pointer",
+        display: "flex", alignItems: "center", gap: 5,
+        padding: "4px 8px", borderRadius: 7, cursor: "pointer",
         background: active ? "rgba(59,130,246,0.12)" : "rgba(255,255,255,0.04)",
         border: `1px solid ${active ? "rgba(59,130,246,0.3)" : "rgba(255,255,255,0.07)"}`,
         color: active ? "#60a5fa" : "var(--text-3)",
-        fontSize: 11, fontWeight: 700, fontFamily: "var(--font-ui)",
+        fontSize: 10.5, fontWeight: 700, fontFamily: "var(--font-ui)",
         transition: "all 150ms",
       }}
     >
@@ -615,7 +739,13 @@ function HudContent({ hudTab, agents, rooms, jobs, busy, dispatch, selectAgent }
           return (
             <button key={agent.id} onClick={() => selectAgent(agent.id)} aria-label={`${agent.name}`} className="card card-hover" style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", border: "none", cursor: "pointer", textAlign: "left" }}>
               <span className="lbl-micro" style={{ color: "var(--text-3)", width: 14 }}>{i + 1}</span>
-              <div className="avatar" style={{ width: 28, height: 28, fontSize: 10, backgroundColor: `${agent.color}18`, borderColor: agent.color, color: agent.color }}>{ini}</div>
+              <div className="avatar" style={{ width: 28, height: 28, fontSize: 10, backgroundColor: `${agent.color}18`, borderColor: agent.color, color: agent.color, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                {agent.avatarUrl ? (
+                  <img src={agent.avatarUrl} alt={agent.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                ) : (
+                  ini
+                )}
+              </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{ fontSize: 12, fontWeight: 600, color: "var(--text-1)", fontFamily: "var(--font-ui)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{agent.name}</p>
                 <p className="lbl-micro" style={{ color: "var(--text-3)", marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{room}</p>

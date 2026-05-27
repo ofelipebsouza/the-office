@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { useOfficeStore } from "../store/useOfficeStore";
 import { 
   Send, X, MessageCircle, Maximize2, Minimize2, 
-  Menu, Compass, History, Sparkles, Hash 
+  Menu, Compass, History, Hash 
 } from "lucide-react";
 
 interface ChatPanelProps {
@@ -28,6 +28,108 @@ export const ChatPanel: React.FC<ChatPanelProps> = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isMaximized, setIsMaximized] = useState(false);
   const [activeChannel, setActiveChannel] = useState<string>("geral"); // "geral" or agentId
+  
+  // Floating / Dragging coordinates and state (distance from bottom-right)
+  const [coords, setCoords] = useState<{ x: number; y: number }>(() => {
+    const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+    return { x: 16, y: isMobile ? 80 : 16 };
+  });
+  const [dragging, setDragging] = useState(false);
+  const isDragging = useRef(false);
+  const dragStart = useRef({ mouseX: 0, mouseY: 0, coordsX: 16, coordsY: typeof window !== "undefined" && window.innerWidth < 768 ? 80 : 16 });
+  const hasMoved = useRef(false);
+
+  // Handle browser resize to keep in bounds
+  useEffect(() => {
+    const handleResize = () => {
+      setCoords(prev => {
+        const padding = 20;
+        const width = isOpen ? (isMaximized ? 720 : 380) : 56;
+        const height = isOpen ? (isMaximized ? 580 : 500) : 56;
+        const minY = window.innerWidth < 768 ? 80 : padding;
+        const newX = Math.min(Math.max(prev.x, padding), window.innerWidth - padding - width);
+        const newY = Math.min(Math.max(prev.y, minY), window.innerHeight - padding - height);
+        return { x: newX, y: newY };
+      });
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [isOpen, isMaximized]);
+
+  const startDrag = (e: React.MouseEvent | React.TouchEvent) => {
+    if ("button" in e && e.button !== 0) return;
+
+    const target = e.target as HTMLElement;
+    if (target.closest("button") || target.closest("input") || target.closest("a") || target.closest("select")) {
+      return;
+    }
+
+    isDragging.current = true;
+    hasMoved.current = false;
+    setDragging(true);
+
+    const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
+    const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
+
+    dragStart.current = {
+      mouseX: clientX,
+      mouseY: clientY,
+      coordsX: coords.x,
+      coordsY: coords.y
+    };
+  };
+
+  useEffect(() => {
+    const handleMove = (e: MouseEvent | TouchEvent) => {
+      if (!isDragging.current) return;
+
+      const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
+      const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
+
+      const dx = clientX - dragStart.current.mouseX;
+      const dy = clientY - dragStart.current.mouseY;
+
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+        hasMoved.current = true;
+      }
+
+      const newX = dragStart.current.coordsX - dx;
+      const newY = dragStart.current.coordsY - dy;
+
+      const padding = 16;
+      const width = isOpen ? (isMaximized ? 720 : 380) : 56;
+      const height = isOpen ? (isMaximized ? 580 : 500) : 56;
+      
+      const minY = window.innerWidth < 768 ? 80 : padding;
+      const boundedX = Math.min(Math.max(newX, padding), window.innerWidth - padding - width);
+      const boundedY = Math.min(Math.max(newY, minY), window.innerHeight - padding - height);
+
+      setCoords({ x: boundedX, y: boundedY });
+    };
+
+    const handleEnd = () => {
+      isDragging.current = false;
+      setDragging(false);
+    };
+
+    window.addEventListener("mousemove", handleMove);
+    window.addEventListener("mouseup", handleEnd);
+    window.addEventListener("touchmove", handleMove, { passive: false });
+    window.addEventListener("touchend", handleEnd);
+
+    return () => {
+      window.removeEventListener("mousemove", handleMove);
+      window.removeEventListener("mouseup", handleEnd);
+      window.removeEventListener("touchmove", handleMove);
+      window.removeEventListener("touchend", handleEnd);
+    };
+  }, [isOpen, isMaximized, coords]);
+
+  const handleButtonClick = () => {
+    if (hasMoved.current) return;
+    setIsOpen(true);
+  };
+
   const [globalHistory, setGlobalHistory] = useState<GlobalMessage[]>([
     {
       sender: "agent",
@@ -257,62 +359,67 @@ export const ChatPanel: React.FC<ChatPanelProps> = () => {
 
   return (
     <>
-      {/* Sleek Floating Toggle Button — Bottom Right */}
+      {/* Sleek Floating Toggle Button — Bottom Right & Draggable Icon Only */}
       {!isOpen && (
         <button
-          onClick={() => setIsOpen(true)}
+          onMouseDown={startDrag}
+          onTouchStart={startDrag}
+          onClick={handleButtonClick}
           style={{
             position: "fixed",
-            bottom: "80px",
-            right: "24px",
+            right: `${coords.x}px`,
+            bottom: `${coords.y}px`,
+            left: "auto",
+            top: "auto",
+            width: "56px",
+            height: "56px",
             zIndex: 40,
-            padding: "0 18px",
-            height: "44px",
-            borderRadius: "99px",
+            borderRadius: "50%",
             backgroundColor: "#2563eb",
             border: "1px solid rgba(59,130,246,0.4)",
             color: "#ffffff",
             display: "flex",
             alignItems: "center",
-            gap: "8px",
-            boxShadow: "0 8px 32px rgba(37,99,235,0.35)",
-            cursor: "pointer",
-            fontFamily: "var(--font-ui)",
-            fontWeight: 700,
-            fontSize: "12px",
-            letterSpacing: "0.5px",
-            transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+            justifyContent: "center",
+            boxShadow: "0 8px 32px rgba(37,99,235,0.45)",
+            cursor: dragging ? "grabbing" : "grab",
+            userSelect: "none",
+            transition: dragging ? "none" : "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
           }}
-          title="Abrir Chat do Escritório"
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = "scale(1.05)";
-            e.currentTarget.style.boxShadow = "0 8px 32px rgba(37,99,235,0.5)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = "scale(1)";
-            e.currentTarget.style.boxShadow = "0 8px 32px rgba(37,99,235,0.35)";
-          }}
+          title="Abrir Chat do Escritório (Arraste para mover)"
         >
-          <Sparkles size={14} className="anim-pulse" style={{ color: "#fbbf24" }} />
-          <span>FALAR COM O ESCRITÓRIO</span>
-          <MessageCircle size={15} />
+          <MessageCircle size={22} style={{ flexShrink: 0 }} />
+          {/* Subtle glowing badge */}
+          <span style={{
+            position: "absolute",
+            top: "2px",
+            right: "2px",
+            width: "12px",
+            height: "12px",
+            borderRadius: "50%",
+            backgroundColor: "#fbbf24",
+            border: "2px solid #2563eb",
+            boxShadow: "0 0 8px #fbbf24"
+          }} className="anim-pulse" />
         </button>
       )}
 
-      {/* Expanded Chat Modal - Anchored Bottom Right */}
+      {/* Expanded Chat Modal - Anchored Bottom Right & Draggable */}
       {isOpen && (
         <div
           style={{
             position: "fixed",
-            bottom: "80px",
-            right: "24px",
+            right: `${coords.x}px`,
+            bottom: `${coords.y}px`,
+            left: "auto",
+            top: "auto",
             zIndex: 50,
             display: "flex",
             flexDirection: "column",
             borderRadius: "var(--r-xl)",
             boxShadow: "0 20px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(59, 130, 246, 0.1)",
             overflow: "hidden",
-            transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+            transition: dragging ? "none" : "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
             width: isMaximized ? "720px" : "380px",
             height: isMaximized ? "580px" : "500px",
             maxWidth: "calc(100vw - 48px)",
@@ -597,16 +704,22 @@ export const ChatPanel: React.FC<ChatPanelProps> = () => {
               background: "transparent"
             }}>
               
-              {/* Chat Header */}
-              <div style={{
-                height: "52px",
-                borderBottom: "1px solid rgba(255, 255, 255, 0.06)",
-                padding: "0 16px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                flexShrink: 0
-              }}>
+              {/* Chat Header - Drag Handle */}
+              <div 
+                onMouseDown={startDrag}
+                onTouchStart={startDrag}
+                style={{
+                  height: "52px",
+                  borderBottom: "1px solid rgba(255, 255, 255, 0.06)",
+                  padding: "0 16px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  flexShrink: 0,
+                  cursor: dragging ? "grabbing" : "grab",
+                  userSelect: "none"
+                }}
+              >
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0 }}>
                   {/* Sidebar trigger - visible when sidebar is collapsed (i.e. not maximized or mobile) */}
                   {(!isMaximized || mobileSidebarOpen) && (
@@ -730,7 +843,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = () => {
                   // Global integrated channel view
                   globalHistory.map((msg, idx) => {
                     const isUser = msg.sender === "user";
-                    const respondent = !isUser && agents.find(a => a.id === msg.agentId);
+                    const respondent = !isUser ? agents.find(a => a.id === msg.agentId) : undefined;
 
                     return (
                       <div 
@@ -752,6 +865,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = () => {
                               display: "flex",
                               alignItems: "center",
                               justifyContent: "center",
+                              overflow: "hidden",
                               fontFamily: "var(--font-ui)",
                               fontSize: "10px",
                               fontWeight: 900,
@@ -761,7 +875,11 @@ export const ChatPanel: React.FC<ChatPanelProps> = () => {
                               color: respondent ? respondent.color : "var(--text-1)"
                             }}
                           >
-                            {msg.agentName ? msg.agentName.split(" ").map(n => n[0]).join("").slice(0, 2) : "AI"}
+                            {respondent?.avatarUrl ? (
+                              <img src={respondent.avatarUrl} alt={msg.agentName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            ) : (
+                              msg.agentName ? msg.agentName.split(" ").map(n => n[0]).join("").slice(0, 2) : "AI"
+                            )}
                           </div>
                         )}
 
@@ -838,6 +956,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = () => {
                                   display: "flex",
                                   alignItems: "center",
                                   justifyContent: "center",
+                                  overflow: "hidden",
                                   fontFamily: "var(--font-ui)",
                                   fontSize: "10px",
                                   fontWeight: 900,
@@ -847,7 +966,11 @@ export const ChatPanel: React.FC<ChatPanelProps> = () => {
                                   color: selectedAgent.color
                                 }}
                               >
-                                {selectedAgent.name.split(" ").map(n => n[0]).join("").slice(0, 2)}
+                                {selectedAgent.avatarUrl ? (
+                                  <img src={selectedAgent.avatarUrl} alt={selectedAgent.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                ) : (
+                                  selectedAgent.name.split(" ").map(n => n[0]).join("").slice(0, 2)
+                                )}
                               </div>
                             )}
 
@@ -909,6 +1032,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = () => {
                               display: "flex",
                               alignItems: "center",
                               justifyContent: "center",
+                              overflow: "hidden",
                               fontFamily: "var(--font-ui)",
                               fontSize: "10px",
                               fontWeight: 900,
@@ -918,7 +1042,11 @@ export const ChatPanel: React.FC<ChatPanelProps> = () => {
                               color: selectedAgent.color
                             }}
                           >
-                            {selectedAgent.name.split(" ").map(n => n[0]).join("").slice(0, 2)}
+                            {selectedAgent.avatarUrl ? (
+                              <img src={selectedAgent.avatarUrl} alt={selectedAgent.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            ) : (
+                              selectedAgent.name.split(" ").map(n => n[0]).join("").slice(0, 2)
+                            )}
                           </div>
                           <div style={{ display: "flex", flexDirection: "column", gap: "4px", alignItems: "flex-start" }}>
                             <span style={{ fontSize: "9px", fontWeight: 700, fontFamily: "var(--font-mono)", color: selectedAgent.color }}>
@@ -955,6 +1083,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = () => {
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
+                      overflow: "hidden",
                       fontFamily: "var(--font-ui)",
                       fontSize: "10px",
                       fontWeight: 900,
@@ -962,7 +1091,11 @@ export const ChatPanel: React.FC<ChatPanelProps> = () => {
                       backgroundColor: "rgba(255,255,255,0.03)",
                       color: "var(--text-3)"
                     }}>
-                      IA
+                      {agents.find(a => a.status === "thinking")?.avatarUrl ? (
+                        <img src={agents.find(a => a.status === "thinking")?.avatarUrl} alt="thinking" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      ) : (
+                        "IA"
+                      )}
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", gap: "4px", alignItems: "flex-start" }}>
                       <span style={{ fontSize: "9px", fontWeight: 700, fontFamily: "var(--font-mono)", color: "var(--text-3)" }}>
