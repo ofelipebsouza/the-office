@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useOfficeStore } from "../store/useOfficeStore";
 import { 
-  Send, X, Maximize2, Minimize2, 
+  Send, X, 
   Menu, Compass, History, Hash 
 } from "lucide-react";
 
@@ -25,7 +25,7 @@ const MOCK_HISTORY = [
 
 export const ChatPanel: React.FC<ChatPanelProps> = () => {
   const { agents, selectedAgentId, selectAgent, addChatMessage, updateAgentStatus, addAgentLog, isChatOpen, setChatOpen } = useOfficeStore();
-  const [isMaximized, setIsMaximized] = useState(false);
+  const [chatSize, setChatSize] = useState<"normal" | "media" | "full">("normal");
   const [activeChannel, setActiveChannel] = useState<string>("geral"); // "geral" or agentId
   
 
@@ -261,7 +261,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = () => {
     <>
       {/* Expanded Chat Modal - Centered Windows-style popup */}
       {isChatOpen && (
-        <div className={`chat-panel-modal ${isMaximized ? "maximized" : ""}`}>
+        <div className={`chat-panel-modal size-${chatSize}`}>
           {/* Main Container Grid */}
           <div style={{
             flex: 1,
@@ -295,9 +295,9 @@ export const ChatPanel: React.FC<ChatPanelProps> = () => {
                 flexDirection: "column",
                 flexShrink: 0,
                 transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                borderRight: (isMaximized || mobileSidebarOpen) ? "1px solid rgba(255, 255, 255, 0.06)" : "none",
-                width: (isMaximized || mobileSidebarOpen) ? "220px" : "0px",
-                opacity: (isMaximized || mobileSidebarOpen) ? 1 : 0,
+                borderRight: (chatSize === "full" || chatSize === "media" || mobileSidebarOpen) ? "1px solid rgba(255, 255, 255, 0.06)" : "none",
+                width: (chatSize === "full" || chatSize === "media" || mobileSidebarOpen) ? "220px" : "0px",
+                opacity: (chatSize === "full" || chatSize === "media" || mobileSidebarOpen) ? 1 : 0,
                 overflow: "hidden",
                 background: "rgba(0, 0, 0, 0.25)",
                 zIndex: 100,
@@ -567,7 +567,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = () => {
               >
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0 }}>
                   {/* Sidebar trigger - visible when sidebar is collapsed (i.e. not maximized or mobile) */}
-                  {(!isMaximized || mobileSidebarOpen) && (
+                  {(!(chatSize === "full" || chatSize === "media") || mobileSidebarOpen) && (
                     <button
                       onClick={() => setMobileSidebarOpen(prev => !prev)}
                       style={{
@@ -616,34 +616,63 @@ export const ChatPanel: React.FC<ChatPanelProps> = () => {
 
                 {/* Header Controls */}
                 <div style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
-                  {/* Maximize Toggle */}
-                  <button
-                    onClick={() => setIsMaximized(prev => !prev)}
-                    style={{
-                      padding: "6px",
-                      borderRadius: "8px",
-                      background: "transparent",
-                      border: "none",
-                      color: "var(--text-3)",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      transition: "all 0.15s ease"
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = "rgba(255, 255, 255, 0.04)";
-                      e.currentTarget.style.color = "var(--text-1)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = "transparent";
-                      e.currentTarget.style.color = "var(--text-3)";
-                    }}
-                    title={isMaximized ? "Restaurar" : "Maximizar"}
-                    className="hidden-mobile"
-                  >
-                    {isMaximized ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
-                  </button>
+                  {/* Size selectors */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "2px", marginRight: "4px" }}>
+                    <button
+                      type="button"
+                      onClick={() => setChatSize("normal")}
+                      style={{
+                        padding: "3px 6px",
+                        borderRadius: "4px",
+                        background: chatSize === "normal" ? "rgba(255, 255, 255, 0.08)" : "transparent",
+                        border: "none",
+                        color: chatSize === "normal" ? "#60a5fa" : "var(--text-3)",
+                        cursor: "pointer",
+                        fontSize: "9px",
+                        fontWeight: 700,
+                        fontFamily: "var(--font-ui)",
+                      }}
+                      title="Tamanho Pequeno"
+                    >
+                      P
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setChatSize("media")}
+                      style={{
+                        padding: "3px 6px",
+                        borderRadius: "4px",
+                        background: chatSize === "media" ? "rgba(255, 255, 255, 0.08)" : "transparent",
+                        border: "none",
+                        color: chatSize === "media" ? "#60a5fa" : "var(--text-3)",
+                        cursor: "pointer",
+                        fontSize: "9px",
+                        fontWeight: 700,
+                        fontFamily: "var(--font-ui)",
+                      }}
+                      title="Tamanho Médio"
+                    >
+                      M
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setChatSize("full")}
+                      style={{
+                        padding: "3px 6px",
+                        borderRadius: "4px",
+                        background: chatSize === "full" ? "rgba(255, 255, 255, 0.08)" : "transparent",
+                        border: "none",
+                        color: chatSize === "full" ? "#60a5fa" : "var(--text-3)",
+                        cursor: "pointer",
+                        fontSize: "9px",
+                        fontWeight: 700,
+                        fontFamily: "var(--font-ui)",
+                      }}
+                      title="Tela Inteira"
+                    >
+                      G
+                    </button>
+                  </div>
 
                   {/* Close Modal */}
                   <button

@@ -10,6 +10,7 @@ import {
   Eye, EyeOff, Video, VideoOff, Shuffle, Award, Play, Shield,
   Coins, BarChart3, Database, Lock, PlusCircle, Users,
   Map, LayoutDashboard, ChevronDown, ChevronUp, MessageCircle,
+  Briefcase, Coffee, MapPin, Layout, Crosshair, Minimize2,
 } from "lucide-react";
 import { Crown, Megaphone, Coins as PhCoins, Handshake, Cpu as PhCpu } from "@phosphor-icons/react";
 import type { RoomId } from "./types/agent";
@@ -38,6 +39,14 @@ const TASKS = [
 ];
 
 /* ─── Helpers ─────────────────────────────────────────────────────────────── */
+const ROOM_ICONS: Record<string, React.ReactNode> = {
+  recepcao:  <MapPin    size={12} />,
+  operacao:  <Briefcase size={12} />,
+  diretoria: <Layout    size={12} />,
+  reuniao:   <Users     size={12} />,
+  lounge:    <Coffee    size={12} />,
+};
+
 const STATUS_LABEL: Record<string, string> = {
   working: "Trabalhando", thinking: "Pensando", chatting: "Conversando",
   meeting: "Reunião", offline: "Offline", idle: "Ocioso",
@@ -55,7 +64,8 @@ const CAMS_H   = 80;
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
 export default function App() {
-  const { tickSimulation, agents, selectedAgentId, selectAgent, rooms, isChatOpen, setChatOpen } = useOfficeStore();
+  const { tickSimulation, agents, selectedAgentId, selectAgent, rooms, isChatOpen, setChatOpen,
+    selectedRoomId, selectRoom, cameraAutoFocus, setCameraAutoFocus, resetCamera, triggerAgentMove } = useOfficeStore();
 
   const [leftOpen,  setLeftOpen]  = useState(true);
   const [rightOpen, setRightOpen] = useState(true);
@@ -66,6 +76,32 @@ export default function App() {
   const [busy,      setBusy]      = useState(false);
   const [mobileTab, setMobileTab] = useState<"map" | "team" | "hud">("map");
   const [sheetOpen, setSheetOpen] = useState(false);
+
+  const [activeHeaderMenu, setActiveHeaderMenu] = useState<"salas" | "acoes" | "camera" | null>(null);
+
+  const toggleHeaderMenu = (menu: "salas" | "acoes" | "camera") => {
+    setActiveHeaderMenu(prev => prev === menu ? null : menu);
+  };
+
+  const handleHeaderRoom = (id: RoomId | null) => {
+    selectRoom(id);
+    selectAgent(null);
+    setActiveHeaderMenu(null);
+  };
+
+  const runHeaderAction = (actionFn: () => void) => {
+    actionFn();
+    setActiveHeaderMenu(null);
+  };
+
+  const convocarReuniao  = () => agents.forEach(a => triggerAgentMove(a.id, "reuniao"));
+  const horaDoCafe       = () => agents.forEach(a => triggerAgentMove(a.id, "lounge"));
+  const voltarAoTrabalho = () => agents.forEach(a => {
+    if (a.id === "1") triggerAgentMove(a.id, "diretoria");
+    else if (a.id === "2") triggerAgentMove(a.id, "recepcao");
+    else triggerAgentMove(a.id, "operacao");
+  });
+  const countRoomAgents = (roomId: string) => agents.filter(a => a.room === roomId).length;
 
   // Resizable sidebars state
   const [leftWidth, setLeftWidth] = useState(220); // Default reduced from 264 to 220
@@ -196,6 +232,17 @@ export default function App() {
   /* ══════════════════════════════════════════════════════════════════════════
      RENDER
      ══════════════════════════════════════════════════════════════════════════ */
+  const headerMenuBtnStyle = (active: boolean, accent: string) => ({
+    display: "flex" as const, alignItems: "center" as const, gap: 5,
+    padding: "4.5px 10px", borderRadius: 7, cursor: "pointer" as const,
+    fontSize: 10.5, fontWeight: 700, fontFamily: "var(--font-ui)",
+    flexShrink: 0, whiteSpace: "nowrap" as const,
+    border: `1px solid ${active ? `${accent}50` : "rgba(255,255,255,0.07)"}`,
+    background: active ? `${accent}18` : "rgba(255,255,255,0.04)",
+    color: active ? accent : "var(--text-3)",
+    transition: "all 150ms",
+  });
+
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100dvh", background: "var(--bg-base)", overflow: "hidden", fontFamily: "var(--font-body)" }}>
 
@@ -203,135 +250,311 @@ export default function App() {
           HEADER
           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <header
+        className="app-header"
         style={{
-          position: "relative",
-          height: `${HEADER_H}px`, flexShrink: 0,
-          display: cinema ? "none" : "flex",
-          alignItems: "center", justifyContent: "space-between",
-          padding: "0 16px", gap: 12,
-          background: "rgba(6,9,17,0.95)", backdropFilter: "blur(20px)",
-          borderBottom: "1px solid var(--border)",
+          height: `${HEADER_H}px`,
+          flexShrink: 0,
+          display: cinema ? "none" : undefined,
           zIndex: 30,
         }}
         aria-label="Barra de navegação"
       >
-        {/* Brand */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-          <div style={{ width: 28, height: 28, borderRadius: 8, background: "rgba(59,130,246,0.12)", border: "1px solid rgba(59,130,246,0.25)", display: "flex", alignItems: "center", justifyContent: "center", color: "#60a5fa" }}>
-            <Sparkles size={13} />
+        {/* DESKTOP HEADER CONTENT */}
+        <div className="desktop-only-flex" style={{ width: "100%", height: "100%", alignItems: "center", justifyContent: "space-between" }}>
+          {/* Brand */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+            <div style={{ width: 28, height: 28, borderRadius: 8, background: "rgba(59,130,246,0.12)", border: "1px solid rgba(59,130,246,0.25)", display: "flex", alignItems: "center", justifyContent: "center", color: "#60a5fa" }}>
+              <Sparkles size={13} />
+            </div>
+            <div>
+              <p className="lbl-caps" style={{ color: "var(--text-1)", fontSize: 10.5, lineHeight: 1.15 }}>The Office · AI Workspace</p>
+              <p className="lbl-micro" style={{ color: "var(--text-3)", marginTop: 1, fontSize: 8 }}>Agentes Autônomos em Tempo Real</p>
+            </div>
           </div>
-          <div>
-            <p className="lbl-caps" style={{ color: "var(--text-1)", fontSize: 10.5, lineHeight: 1.15 }}>The Office · AI Workspace</p>
-            <p className="lbl-micro" style={{ color: "var(--text-3)", marginTop: 1, fontSize: 8 }}>Agentes Autônomos em Tempo Real</p>
+
+          {/* Center pill */}
+          <div style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)", borderRadius: 8, padding: "4px 8px" }}>
+            <Activity size={11} color="#34d399" />
+            <span className="lbl-micro" style={{ color: "#34d399" }}>Rede Estável</span>
+            <span className="sdot s-working anim-pulse-dot" />
+          </div>
+
+          {/* Right controls */}
+          <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+            {/* Cameras toggle */}
+            <HeaderBtn
+              active={camsOpen}
+              onClick={() => setCamsOpen(v => !v)}
+              aria-label={camsOpen ? "Ocultar câmeras" : "Exibir câmeras"}
+              aria-expanded={camsOpen}
+              icon={camsOpen ? <Video size={13} /> : <VideoOff size={13} />}
+              label="Câmeras"
+            />
+
+            {/* Left sidebar */}
+            <HeaderBtn
+              active={leftOpen}
+              onClick={() => setLeftOpen(v => !v)}
+              aria-label={leftOpen ? "Fechar sidebar" : "Abrir departamentos"}
+              aria-expanded={leftOpen}
+              icon={leftOpen ? <PanelLeftClose size={13} /> : <PanelLeft size={13} />}
+              label="Depts"
+            />
+
+            {/* Right sidebar */}
+            <HeaderBtn
+              active={rightOpen}
+              onClick={() => setRightOpen(v => !v)}
+              aria-label={rightOpen ? "Fechar monitor" : "Abrir monitor"}
+              aria-expanded={rightOpen}
+              icon={rightOpen ? <PanelRightClose size={13} /> : <PanelRight size={13} />}
+              label="Monitor"
+            />
+
+            {/* Simulate */}
+            <button
+              onClick={() => {
+                const a = agents[Math.floor(Math.random() * agents.length)];
+                const opts: RoomId[] = ["recepcao","operacao","reuniao","lounge","diretoria"];
+                const dest = opts.filter(r => r !== a.room)[Math.floor(Math.random() * 4)];
+                useOfficeStore.getState().triggerAgentMove(a.id, dest);
+              }}
+              aria-label="Mover agente aleatório"
+              style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 12px", borderRadius: 10, background: "rgba(99,102,241,0.15)", border: "1px solid rgba(99,102,241,0.3)", color: "#a5b4fc", fontSize: 11, fontWeight: 700, fontFamily: "var(--font-ui)", cursor: "pointer", transition: "all 150ms" }}
+            >
+              <Shuffle size={13} />
+              <span>Simular</span>
+            </button>
+
+            {/* Cinema */}
+            <button
+              onClick={() => { setCinema(true); setLeftOpen(false); setRightOpen(false); setCamsOpen(false); }}
+              aria-label="Modo foco total"
+              style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 12px", borderRadius: 10, background: "#2563eb", border: "1px solid rgba(59,130,246,0.4)", color: "white", fontSize: 11, fontWeight: 700, fontFamily: "var(--font-ui)", cursor: "pointer" }}
+            >
+              <Eye size={13} />
+              <span>Foco</span>
+            </button>
           </div>
         </div>
 
-        {/* Mobile Header Centralized Chat Button */}
-        <button
-          onClick={() => setChatOpen(!isChatOpen)}
-          aria-label={isChatOpen ? "Fechar Chat" : "Abrir Chat"}
-          className="mobile-only-flex"
-          style={{
-            position: "absolute",
-            left: "50%",
-            transform: "translateX(-50%)",
-            width: "36px",
-            height: "36px",
-            borderRadius: "10px",
-            backgroundColor: isChatOpen ? "#2563eb" : "rgba(37,99,235,0.15)",
-            border: "1px solid rgba(59,130,246,0.3)",
-            color: "#ffffff",
+        {/* MOBILE HEADER CONTENT - 5 ITEMS GRID */}
+        <div className="mobile-only-grid" style={{ width: "100%", height: "100%", gridTemplateColumns: "repeat(5, 1fr)", alignItems: "center", justifyItems: "center" }}>
+          
+          {/* Item 1: Brand / Logo */}
+          <div style={{
+            width: "40px",
+            height: "40px",
+            borderRadius: "50%",
+            background: "rgba(59,130,246,0.12)",
+            border: "1px solid rgba(59,130,246,0.25)",
+            display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            boxShadow: isChatOpen ? "0 0 12px rgba(37,99,235,0.6)" : "none",
-            cursor: "pointer",
-            transition: "all 0.2s ease-in-out",
-            zIndex: 40,
-          }}
-        >
-          <MessageCircle size={18} />
-          {/* Glowing badge */}
-          <span style={{
-            position: "absolute",
-            top: "-2px",
-            right: "-2px",
-            width: "8px",
-            height: "8px",
-            borderRadius: "50%",
-            backgroundColor: "#fbbf24",
-            border: "1.5px solid #2563eb",
-            boxShadow: "0 0 6px #fbbf24"
-          }} className="anim-pulse" />
-        </button>
+            color: "#60a5fa",
+          }}>
+            <Sparkles size={16} />
+          </div>
 
-        {/* Center pill */}
-        <div style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)", borderRadius: 8, padding: "4px 8px" }} className="hidden-mobile">
-          <Activity size={11} color="#34d399" />
-          <span className="lbl-micro" style={{ color: "#34d399" }}>Rede Estável</span>
-          <span className="sdot s-working anim-pulse-dot" />
-        </div>
-
-        {/* Right controls */}
-        <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-
-          {/* Cameras toggle */}
-          <HeaderBtn
-            active={camsOpen}
-            onClick={() => setCamsOpen(v => !v)}
-            aria-label={camsOpen ? "Ocultar câmeras" : "Exibir câmeras"}
-            aria-expanded={camsOpen}
-            icon={camsOpen ? <Video size={13} /> : <VideoOff size={13} />}
-            label="Câmeras"
-            hideOnMobile
-          />
-
-          {/* Left sidebar */}
-          <HeaderBtn
-            active={leftOpen}
-            onClick={() => setLeftOpen(v => !v)}
-            aria-label={leftOpen ? "Fechar sidebar" : "Abrir departamentos"}
-            aria-expanded={leftOpen}
-            icon={leftOpen ? <PanelLeftClose size={13} /> : <PanelLeft size={13} />}
-            label="Depts"
-            hideOnMobile
-          />
-
-          {/* Right sidebar */}
-          <HeaderBtn
-            active={rightOpen}
-            onClick={() => setRightOpen(v => !v)}
-            aria-label={rightOpen ? "Fechar monitor" : "Abrir monitor"}
-            aria-expanded={rightOpen}
-            icon={rightOpen ? <PanelRightClose size={13} /> : <PanelRight size={13} />}
-            label="Monitor"
-            hideOnMobile
-          />
-
-          {/* Simulate */}
+          {/* Item 2: Salas Dropdown Trigger */}
           <button
-            onClick={() => {
-              const a = agents[Math.floor(Math.random() * agents.length)];
-              const opts: RoomId[] = ["recepcao","operacao","reuniao","lounge","diretoria"];
-              const dest = opts.filter(r => r !== a.room)[Math.floor(Math.random() * 4)];
-              useOfficeStore.getState().triggerAgentMove(a.id, dest);
+            onClick={() => toggleHeaderMenu("salas")}
+            aria-pressed={activeHeaderMenu === "salas"}
+            style={{
+              width: "40px",
+              height: "40px",
+              borderRadius: "50%",
+              background: activeHeaderMenu === "salas" ? "rgba(59,130,246,0.15)" : "rgba(255,255,255,0.04)",
+              border: `1px solid ${activeHeaderMenu === "salas" ? "rgba(59,130,246,0.3)" : "rgba(255,255,255,0.07)"}`,
+              color: activeHeaderMenu === "salas" ? "#60a5fa" : "var(--text-3)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              transition: "all 150ms",
             }}
-            aria-label="Mover agente aleatório"
-            style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 12px", borderRadius: 10, background: "rgba(99,102,241,0.15)", border: "1px solid rgba(99,102,241,0.3)", color: "#a5b4fc", fontSize: 11, fontWeight: 700, fontFamily: "var(--font-ui)", cursor: "pointer", transition: "all 150ms" }}
           >
-            <Shuffle size={13} />
-            <span className="hidden-mobile">Simular</span>
+            <MapPin size={16} />
           </button>
 
-          {/* Cinema */}
+          {/* Item 3: Centralized Chat Button */}
           <button
-            onClick={() => { setCinema(true); setLeftOpen(false); setRightOpen(false); setCamsOpen(false); }}
-            aria-label="Modo foco total"
-            style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 12px", borderRadius: 10, background: "#2563eb", border: "1px solid rgba(59,130,246,0.4)", color: "white", fontSize: 11, fontWeight: 700, fontFamily: "var(--font-ui)", cursor: "pointer" }}
+            onClick={() => setChatOpen(!isChatOpen)}
+            aria-label={isChatOpen ? "Fechar Chat" : "Abrir Chat"}
+            style={{
+              width: "40px",
+              height: "40px",
+              borderRadius: "50%",
+              backgroundColor: isChatOpen ? "#2563eb" : "rgba(37,99,235,0.15)",
+              border: "1px solid rgba(59,130,246,0.3)",
+              color: "#ffffff",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: isChatOpen ? "0 0 12px rgba(37,99,235,0.6)" : "none",
+              cursor: "pointer",
+              transition: "all 0.2s ease-in-out",
+              position: "relative",
+            }}
           >
-            <Eye size={13} />
-            <span className="hidden-mobile">Foco</span>
+            <MessageCircle size={18} />
+            {/* Glowing badge */}
+            <span style={{
+              position: "absolute",
+              top: "0px",
+              right: "0px",
+              width: "8px",
+              height: "8px",
+              borderRadius: "50%",
+              backgroundColor: "#fbbf24",
+              border: "1.5px solid #2563eb",
+              boxShadow: "0 0 6px #fbbf24"
+            }} className="anim-pulse" />
           </button>
+
+          {/* Item 4: Ações Dropdown Trigger */}
+          <button
+            onClick={() => toggleHeaderMenu("acoes")}
+            aria-pressed={activeHeaderMenu === "acoes"}
+            style={{
+              width: "40px",
+              height: "40px",
+              borderRadius: "50%",
+              background: activeHeaderMenu === "acoes" ? "rgba(59,130,246,0.15)" : "rgba(255,255,255,0.04)",
+              border: `1px solid ${activeHeaderMenu === "acoes" ? "rgba(59,130,246,0.3)" : "rgba(255,255,255,0.07)"}`,
+              color: activeHeaderMenu === "acoes" ? "#60a5fa" : "var(--text-3)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              transition: "all 150ms",
+            }}
+          >
+            <Layout size={16} />
+          </button>
+
+          {/* Item 5: Câmera Dropdown Trigger */}
+          <button
+            onClick={() => toggleHeaderMenu("camera")}
+            aria-pressed={activeHeaderMenu === "camera"}
+            style={{
+              width: "40px",
+              height: "40px",
+              borderRadius: "50%",
+              background: activeHeaderMenu === "camera" ? "rgba(59,130,246,0.15)" : "rgba(255,255,255,0.04)",
+              border: `1px solid ${activeHeaderMenu === "camera" ? "rgba(59,130,246,0.3)" : "rgba(255,255,255,0.07)"}`,
+              color: activeHeaderMenu === "camera" ? "#60a5fa" : "var(--text-3)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              transition: "all 150ms",
+            }}
+          >
+            <Crosshair size={16} />
+          </button>
+
         </div>
+
+        {/* Mobile Header Dropdown Menus */}
+        {activeHeaderMenu && (
+          <div 
+            onClick={() => setActiveHeaderMenu(null)}
+            style={{ position: "fixed", inset: 0, zIndex: 90, background: "transparent" }}
+          />
+        )}
+
+        {activeHeaderMenu === "salas" && (
+          <div 
+            style={{ 
+              position: "absolute", top: HEADER_H + 4, left: "12px", 
+              background: "rgba(6, 10, 18, 0.95)", border: "1px solid rgba(255,255,255,0.08)", 
+              borderRadius: "var(--r-md)", padding: "10px", display: "flex", flexDirection: "column", gap: 4, 
+              zIndex: 100, boxShadow: "0 10px 30px rgba(0,0,0,0.6)", minWidth: 160,
+              backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)"
+            }}
+            className="anim-fade-up"
+          >
+            <p className="lbl-micro" style={{ color: "var(--text-3)", padding: "2px 6px 6px", borderBottom: "1px solid rgba(255,255,255,0.05)", marginBottom: 4 }}>Salas</p>
+            <button onClick={() => handleHeaderRoom(null)} style={{ ...headerMenuBtnStyle(selectedRoomId === null, "#3b82f6"), width: "100%", justifyContent: "flex-start" }}>
+              <span>Geral (Visão Global)</span>
+            </button>
+            {rooms.map(room => {
+              const sel = selectedRoomId === room.id;
+              const n   = countRoomAgents(room.id);
+              return (
+                <button
+                  key={room.id}
+                  onClick={() => handleHeaderRoom(room.id as RoomId)}
+                  style={{ ...headerMenuBtnStyle(sel, "#3b82f6"), width: "100%", justifyContent: "space-between" }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    {ROOM_ICONS[room.id] ?? null}
+                    <span>{room.name}</span>
+                  </div>
+                  {n > 0 && (
+                    <span style={{ fontSize: 9, fontWeight: 900, padding: "1px 5px", borderRadius: 4, background: sel ? "rgba(59,130,246,0.3)" : "rgba(255,255,255,0.08)", color: sel ? "#bfdbfe" : "var(--text-3)" }}>
+                      {n}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {activeHeaderMenu === "acoes" && (
+          <div 
+            style={{ 
+              position: "absolute", top: HEADER_H + 4, left: "50%", transform: "translateX(-50%)", 
+              background: "rgba(6, 10, 18, 0.95)", border: "1px solid rgba(255,255,255,0.08)", 
+              borderRadius: "var(--r-md)", padding: "10px", display: "flex", flexDirection: "column", gap: 4, 
+              zIndex: 100, boxShadow: "0 10px 30px rgba(0,0,0,0.6)", minWidth: 140,
+              backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)"
+            }}
+            className="anim-fade-up"
+          >
+            <p className="lbl-micro" style={{ color: "var(--text-3)", padding: "2px 6px 6px", borderBottom: "1px solid rgba(255,255,255,0.05)", marginBottom: 4 }}>Ações Coletivas</p>
+            <button onClick={() => runHeaderAction(voltarAoTrabalho)} style={{ ...headerMenuBtnStyle(false, "#10b981"), width: "100%" }}>
+              <Briefcase size={12} /> <span>Trabalhar</span>
+            </button>
+            <button onClick={() => runHeaderAction(convocarReuniao)} style={{ ...headerMenuBtnStyle(false, "#06b6d4"), width: "100%" }}>
+              <Users size={12} /> <span>Reunião</span>
+            </button>
+            <button onClick={() => runHeaderAction(horaDoCafe)} style={{ ...headerMenuBtnStyle(false, "#818cf8"), width: "100%" }}>
+              <Coffee size={12} /> <span>Hora do Café</span>
+            </button>
+          </div>
+        )}
+
+        {activeHeaderMenu === "camera" && (
+          <div 
+            style={{ 
+              position: "absolute", top: HEADER_H + 4, right: "12px", 
+              background: "rgba(6, 10, 18, 0.95)", border: "1px solid rgba(255,255,255,0.08)", 
+              borderRadius: "var(--r-md)", padding: "10px", display: "flex", flexDirection: "column", gap: 4, 
+              zIndex: 100, boxShadow: "0 10px 30px rgba(0,0,0,0.6)", minWidth: 150,
+              backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)"
+            }}
+            className="anim-fade-up"
+          >
+            <p className="lbl-micro" style={{ color: "var(--text-3)", padding: "2px 6px 6px", borderBottom: "1px solid rgba(255, 255, 255, 0.05)", marginBottom: 4 }}>Câmera</p>
+            <button 
+              onClick={() => setCameraAutoFocus(!cameraAutoFocus)} 
+              style={{ ...headerMenuBtnStyle(cameraAutoFocus, "#3b82f6"), width: "100%" }}
+            >
+              <Crosshair size={12} className={cameraAutoFocus ? "animate-pulse" : ""} />
+              <span>Foco: {cameraAutoFocus ? "Automático" : "Manual"}</span>
+            </button>
+            <button 
+              onClick={() => runHeaderAction(resetCamera)} 
+              style={{ ...headerMenuBtnStyle(false, "#64748b"), width: "100%" }}
+            >
+              <Minimize2 size={12} />
+              <span>Visão Geral</span>
+            </button>
+          </div>
+        )}
       </header>
 
       {/* Cinema exit */}
@@ -526,7 +749,11 @@ export default function App() {
             <OfficeCanvas />
           </div>
           {/* Toolbar pinned at bottom */}
-          {!cinema && <Toolbar />}
+          {!cinema && (
+            <div className="desktop-only">
+              <Toolbar />
+            </div>
+          )}
         </main>
 
         {/* RIGHT RESIZE HANDLE */}
