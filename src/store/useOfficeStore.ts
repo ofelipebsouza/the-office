@@ -10,12 +10,16 @@ interface OfficeState {
   // Camera State
   cameraAutoFocus: boolean;
   triggerCameraReset: number;
+
+  // Chat State
+  isChatOpen: boolean;
   
   // Actions
   selectAgent: (id: string | null) => void;
   selectRoom: (id: RoomId | null) => void;
   setCameraAutoFocus: (enabled: boolean) => void;
   resetCamera: () => void;
+  setChatOpen: (open: boolean) => void;
   updateAgentStatus: (id: string, status: AgentStatus) => void;
   updateAgentPosition: (id: string, pos: { x: number; y: number }) => void;
   setAgentTargetPosition: (id: string, targetPos: { x: number; y: number } | null) => void;
@@ -239,6 +243,10 @@ export const useOfficeStore = create<OfficeState>((set, get) => ({
   triggerCameraReset: 0,
   setCameraAutoFocus: (enabled) => set({ cameraAutoFocus: enabled }),
   resetCamera: () => set((state) => ({ triggerCameraReset: state.triggerCameraReset + 1 })),
+
+  // Chat State
+  isChatOpen: false,
+  setChatOpen: (open) => set({ isChatOpen: open }),
 
   selectAgent: (id) => {
     set({ selectedAgentId: id });

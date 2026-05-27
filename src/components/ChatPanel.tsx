@@ -24,8 +24,7 @@ const MOCK_HISTORY = [
 ];
 
 export const ChatPanel: React.FC<ChatPanelProps> = () => {
-  const { agents, selectedAgentId, selectAgent, addChatMessage, updateAgentStatus, addAgentLog } = useOfficeStore();
-  const [isOpen, setIsOpen] = useState(false);
+  const { agents, selectedAgentId, selectAgent, addChatMessage, updateAgentStatus, addAgentLog, isChatOpen, setChatOpen } = useOfficeStore();
   const [isMaximized, setIsMaximized] = useState(false);
   const [activeChannel, setActiveChannel] = useState<string>("geral"); // "geral" or agentId
   
@@ -44,8 +43,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = () => {
     const handleResize = () => {
       setCoords(prev => {
         const padding = 20;
-        const width = isOpen ? (isMaximized ? 720 : 380) : 56;
-        const height = isOpen ? (isMaximized ? 580 : 500) : 56;
+        const width = isChatOpen ? (isMaximized ? 720 : 380) : 56;
+        const height = isChatOpen ? (isMaximized ? 580 : 500) : 56;
         const minY = window.innerWidth < 768 ? 80 : padding;
         const newX = Math.min(Math.max(prev.x, padding), window.innerWidth - padding - width);
         const newY = Math.min(Math.max(prev.y, minY), window.innerHeight - padding - height);
@@ -54,10 +53,11 @@ export const ChatPanel: React.FC<ChatPanelProps> = () => {
     };
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, [isOpen, isMaximized]);
+  }, [isChatOpen, isMaximized]);
 
   const startDrag = (e: React.MouseEvent | React.TouchEvent) => {
     if ("button" in e && e.button !== 0) return;
+    if (window.innerWidth < 768) return; // Disable drag on mobile
 
     const target = e.target as HTMLElement;
     if (target.closest("button") || target.closest("input") || target.closest("a") || target.closest("select")) {
@@ -97,8 +97,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = () => {
       const newY = dragStart.current.coordsY - dy;
 
       const padding = 16;
-      const width = isOpen ? (isMaximized ? 720 : 380) : 56;
-      const height = isOpen ? (isMaximized ? 580 : 500) : 56;
+      const width = isChatOpen ? (isMaximized ? 720 : 380) : 56;
+      const height = isChatOpen ? (isMaximized ? 580 : 500) : 56;
       
       const minY = window.innerWidth < 768 ? 80 : padding;
       const boundedX = Math.min(Math.max(newX, padding), window.innerWidth - padding - width);
@@ -123,11 +123,11 @@ export const ChatPanel: React.FC<ChatPanelProps> = () => {
       window.removeEventListener("touchmove", handleMove);
       window.removeEventListener("touchend", handleEnd);
     };
-  }, [isOpen, isMaximized, coords]);
+  }, [isChatOpen, isMaximized, coords]);
 
   const handleButtonClick = () => {
     if (hasMoved.current) return;
-    setIsOpen(true);
+    setChatOpen(true);
   };
 
   const [globalHistory, setGlobalHistory] = useState<GlobalMessage[]>([
@@ -169,7 +169,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = () => {
     if (chatContainer) {
       chatContainer.scrollTop = chatContainer.scrollHeight;
     }
-  }, [globalHistory, selectedAgent?.chatHistory, isOpen, activeChannel]);
+  }, [globalHistory, selectedAgent?.chatHistory, isChatOpen, activeChannel]);
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
@@ -360,11 +360,12 @@ export const ChatPanel: React.FC<ChatPanelProps> = () => {
   return (
     <>
       {/* Sleek Floating Toggle Button — Bottom Right & Draggable Icon Only */}
-      {!isOpen && (
+      {!isChatOpen && (
         <button
           onMouseDown={startDrag}
           onTouchStart={startDrag}
           onClick={handleButtonClick}
+          className="hidden-mobile"
           style={{
             position: "fixed",
             right: `${coords.x}px`,
@@ -405,8 +406,9 @@ export const ChatPanel: React.FC<ChatPanelProps> = () => {
       )}
 
       {/* Expanded Chat Modal - Anchored Bottom Right & Draggable */}
-      {isOpen && (
+      {isChatOpen && (
         <div
+          className="chat-panel-modal"
           style={{
             position: "fixed",
             right: `${coords.x}px`,
@@ -440,8 +442,24 @@ export const ChatPanel: React.FC<ChatPanelProps> = () => {
             height: "100%"
           }}>
             
+            {/* Mobile Sidebar Backdrop */}
+            {mobileSidebarOpen && (
+              <div 
+                className="mobile-only-block"
+                onClick={() => setMobileSidebarOpen(false)}
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  background: "rgba(0, 0, 0, 0.4)",
+                  backdropFilter: "blur(2px)",
+                  zIndex: 90,
+                }}
+              />
+            )}
+
             {/* Sidebar Column: Channels & History */}
             <div
+              className={`chat-sidebar-mobile ${mobileSidebarOpen ? "open" : ""}`}
               style={{
                 display: "flex",
                 flexDirection: "column",
@@ -452,7 +470,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = () => {
                 opacity: (isMaximized || mobileSidebarOpen) ? 1 : 0,
                 overflow: "hidden",
                 background: "rgba(0, 0, 0, 0.25)",
-                zIndex: 30,
+                zIndex: 100,
               }}
             >
               {/* Sidebar Header */}
@@ -802,7 +820,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = () => {
 
                   {/* Close Modal */}
                   <button
-                    onClick={() => setIsOpen(false)}
+                    onClick={() => setChatOpen(false)}
                     style={{
                       padding: "6px",
                       borderRadius: "8px",
@@ -831,14 +849,16 @@ export const ChatPanel: React.FC<ChatPanelProps> = () => {
               </div>
 
               {/* Message List Area */}
-              <div style={{
-                flex: 1,
-                overflowY: "auto",
-                padding: "16px",
-                display: "flex",
-                flexDirection: "column",
-                gap: "16px"
-              }}>
+              <div 
+                className="chat-content-area-mobile"
+                style={{
+                  flex: 1,
+                  overflowY: "auto",
+                  padding: "16px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "16px"
+                }}>
                 {activeChannel === "geral" ? (
                   // Global integrated channel view
                   globalHistory.map((msg, idx) => {
@@ -1124,6 +1144,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = () => {
               {/* Chat Input Centered - Grok & ChatGPT aesthetics */}
               <form 
                 onSubmit={handleSend} 
+                className="chat-input-form-mobile"
                 style={{
                   padding: "16px 20px 12px 20px",
                   borderTop: "1px solid rgba(255, 255, 255, 0.06)",

@@ -9,7 +9,7 @@ import {
   PanelLeftClose, PanelLeft, PanelRightClose, PanelRight,
   Eye, EyeOff, Video, VideoOff, Shuffle, Award, Play, Shield,
   Coins, BarChart3, Database, Lock, PlusCircle, Users,
-  Map, LayoutDashboard, ChevronDown, ChevronUp,
+  Map, LayoutDashboard, ChevronDown, ChevronUp, MessageCircle,
 } from "lucide-react";
 import { Crown, Megaphone, Coins as PhCoins, Handshake, Cpu as PhCpu } from "@phosphor-icons/react";
 import type { RoomId } from "./types/agent";
@@ -55,7 +55,7 @@ const CAMS_H   = 80;
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
 export default function App() {
-  const { tickSimulation, agents, selectedAgentId, selectAgent, rooms } = useOfficeStore();
+  const { tickSimulation, agents, selectedAgentId, selectAgent, rooms, isChatOpen, setChatOpen } = useOfficeStore();
 
   const [leftOpen,  setLeftOpen]  = useState(true);
   const [rightOpen, setRightOpen] = useState(true);
@@ -204,6 +204,7 @@ export default function App() {
           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <header
         style={{
+          position: "relative",
           height: `${HEADER_H}px`, flexShrink: 0,
           display: cinema ? "none" : "flex",
           alignItems: "center", justifyContent: "space-between",
@@ -224,6 +225,44 @@ export default function App() {
             <p className="lbl-micro" style={{ color: "var(--text-3)", marginTop: 1, fontSize: 8 }}>Agentes Autônomos em Tempo Real</p>
           </div>
         </div>
+
+        {/* Mobile Header Centralized Chat Button */}
+        <button
+          onClick={() => setChatOpen(!isChatOpen)}
+          aria-label={isChatOpen ? "Fechar Chat" : "Abrir Chat"}
+          className="mobile-only-flex"
+          style={{
+            position: "absolute",
+            left: "50%",
+            transform: "translateX(-50%)",
+            width: "36px",
+            height: "36px",
+            borderRadius: "10px",
+            backgroundColor: isChatOpen ? "#2563eb" : "rgba(37,99,235,0.15)",
+            border: "1px solid rgba(59,130,246,0.3)",
+            color: "#ffffff",
+            alignItems: "center",
+            justifyContent: "center",
+            boxShadow: isChatOpen ? "0 0 12px rgba(37,99,235,0.6)" : "none",
+            cursor: "pointer",
+            transition: "all 0.2s ease-in-out",
+            zIndex: 40,
+          }}
+        >
+          <MessageCircle size={18} />
+          {/* Glowing badge */}
+          <span style={{
+            position: "absolute",
+            top: "-2px",
+            right: "-2px",
+            width: "8px",
+            height: "8px",
+            borderRadius: "50%",
+            backgroundColor: "#fbbf24",
+            border: "1.5px solid #2563eb",
+            boxShadow: "0 0 6px #fbbf24"
+          }} className="anim-pulse" />
+        </button>
 
         {/* Center pill */}
         <div style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)", borderRadius: 8, padding: "4px 8px" }} className="hidden-mobile">

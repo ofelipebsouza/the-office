@@ -380,3 +380,79 @@ body {
 .resize-handle:active {
   background: rgba(59, 130, 246, 0.45) !important;
 }
+
+/* ── Chat Panel Mobile Custom Styles ─────────────────────── */
+.chat-panel-modal {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease !important;
+}
+
+@media (max-width: 767px) {
+  .chat-panel-modal {
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: 44px !important; /* Positioned directly under the mobile header */
+    bottom: 0 !important;
+    width: 100% !important;
+    height: calc(100dvh - 44px) !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    border-radius: 0 !important;
+    border: none !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: none !important;
+    background: rgba(5, 8, 16, 0.95) !important;
+  }
+  
+  .chat-panel-modal-inner {
+    border-radius: 0 !important;
+  }
+
+  .chat-sidebar-mobile {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    width: 260px !important;
+    z-index: 100 !important;
+    background: rgba(6, 9, 17, 0.98) !important;
+    backdrop-filter: blur(24px) !important;
+    -webkit-backdrop-filter: blur(24px) !important;
+    box-shadow: 6px 0 24px rgba(0, 0, 0, 0.6) !important;
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    display: flex !important;
+    opacity: 1 !important;
+  }
+
+  .chat-sidebar-mobile.open {
+    transform: translateX(0) !important;
+  }
+
+  .mobile-only-block {
+    display: block !important;
+  }
+
+  .mobile-only-flex {
+    display: flex !important;
+  }
+
+  .chat-content-area-mobile {
+    padding: 10px !important;
+    gap: 12px !important;
+  }
+
+  .chat-input-form-mobile {
+    padding: 10px 12px 10px 12px !important;
+    border-radius: 0 !important;
+  }
+}
+
+@media (min-width: 768px) {
+  .mobile-only-block {
+    display: none !important;
+  }
+  .mobile-only-flex {
+    display: none !important;
+  }
+}
