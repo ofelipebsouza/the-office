@@ -239,7 +239,7 @@ export const useOfficeStore = create<OfficeState>((set, get) => ({
   selectedRoomId: null,
   
   // Camera State
-  cameraAutoFocus: true,
+  cameraAutoFocus: false,
   triggerCameraReset: 0,
   setCameraAutoFocus: (enabled) => set({ cameraAutoFocus: enabled }),
   resetCamera: () => set((state) => ({ triggerCameraReset: state.triggerCameraReset + 1 })),

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useOfficeStore } from "../store/useOfficeStore";
 import { 
-  Send, X, MessageCircle, Maximize2, Minimize2, 
+  Send, X, Maximize2, Minimize2, 
   Menu, Compass, History, Hash 
 } from "lucide-react";
 
@@ -28,107 +28,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = () => {
   const [isMaximized, setIsMaximized] = useState(false);
   const [activeChannel, setActiveChannel] = useState<string>("geral"); // "geral" or agentId
   
-  // Floating / Dragging coordinates and state (distance from bottom-right)
-  const [coords, setCoords] = useState<{ x: number; y: number }>(() => {
-    const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
-    return { x: 16, y: isMobile ? 80 : 16 };
-  });
-  const [dragging, setDragging] = useState(false);
-  const isDragging = useRef(false);
-  const dragStart = useRef({ mouseX: 0, mouseY: 0, coordsX: 16, coordsY: typeof window !== "undefined" && window.innerWidth < 768 ? 80 : 16 });
-  const hasMoved = useRef(false);
 
-  // Handle browser resize to keep in bounds
-  useEffect(() => {
-    const handleResize = () => {
-      setCoords(prev => {
-        const padding = 20;
-        const width = isChatOpen ? (isMaximized ? 720 : 380) : 56;
-        const height = isChatOpen ? (isMaximized ? 580 : 500) : 56;
-        const minY = window.innerWidth < 768 ? 80 : padding;
-        const newX = Math.min(Math.max(prev.x, padding), window.innerWidth - padding - width);
-        const newY = Math.min(Math.max(prev.y, minY), window.innerHeight - padding - height);
-        return { x: newX, y: newY };
-      });
-    };
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, [isChatOpen, isMaximized]);
-
-  const startDrag = (e: React.MouseEvent | React.TouchEvent) => {
-    if ("button" in e && e.button !== 0) return;
-    if (window.innerWidth < 768) return; // Disable drag on mobile
-
-    const target = e.target as HTMLElement;
-    if (target.closest("button") || target.closest("input") || target.closest("a") || target.closest("select")) {
-      return;
-    }
-
-    isDragging.current = true;
-    hasMoved.current = false;
-    setDragging(true);
-
-    const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
-    const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
-
-    dragStart.current = {
-      mouseX: clientX,
-      mouseY: clientY,
-      coordsX: coords.x,
-      coordsY: coords.y
-    };
-  };
-
-  useEffect(() => {
-    const handleMove = (e: MouseEvent | TouchEvent) => {
-      if (!isDragging.current) return;
-
-      const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
-      const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
-
-      const dx = clientX - dragStart.current.mouseX;
-      const dy = clientY - dragStart.current.mouseY;
-
-      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
-        hasMoved.current = true;
-      }
-
-      const newX = dragStart.current.coordsX - dx;
-      const newY = dragStart.current.coordsY - dy;
-
-      const padding = 16;
-      const width = isChatOpen ? (isMaximized ? 720 : 380) : 56;
-      const height = isChatOpen ? (isMaximized ? 580 : 500) : 56;
-      
-      const minY = window.innerWidth < 768 ? 80 : padding;
-      const boundedX = Math.min(Math.max(newX, padding), window.innerWidth - padding - width);
-      const boundedY = Math.min(Math.max(newY, minY), window.innerHeight - padding - height);
-
-      setCoords({ x: boundedX, y: boundedY });
-    };
-
-    const handleEnd = () => {
-      isDragging.current = false;
-      setDragging(false);
-    };
-
-    window.addEventListener("mousemove", handleMove);
-    window.addEventListener("mouseup", handleEnd);
-    window.addEventListener("touchmove", handleMove, { passive: false });
-    window.addEventListener("touchend", handleEnd);
-
-    return () => {
-      window.removeEventListener("mousemove", handleMove);
-      window.removeEventListener("mouseup", handleEnd);
-      window.removeEventListener("touchmove", handleMove);
-      window.removeEventListener("touchend", handleEnd);
-    };
-  }, [isChatOpen, isMaximized, coords]);
-
-  const handleButtonClick = () => {
-    if (hasMoved.current) return;
-    setChatOpen(true);
-  };
 
   const [globalHistory, setGlobalHistory] = useState<GlobalMessage[]>([
     {
@@ -359,79 +259,9 @@ export const ChatPanel: React.FC<ChatPanelProps> = () => {
 
   return (
     <>
-      {/* Sleek Floating Toggle Button — Bottom Right & Draggable Icon Only */}
-      {!isChatOpen && (
-        <button
-          onMouseDown={startDrag}
-          onTouchStart={startDrag}
-          onClick={handleButtonClick}
-          className="hidden-mobile"
-          style={{
-            position: "fixed",
-            right: `${coords.x}px`,
-            bottom: `${coords.y}px`,
-            left: "auto",
-            top: "auto",
-            width: "56px",
-            height: "56px",
-            zIndex: 40,
-            borderRadius: "50%",
-            backgroundColor: "#2563eb",
-            border: "1px solid rgba(59,130,246,0.4)",
-            color: "#ffffff",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            boxShadow: "0 8px 32px rgba(37,99,235,0.45)",
-            cursor: dragging ? "grabbing" : "grab",
-            userSelect: "none",
-            transition: dragging ? "none" : "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-          }}
-          title="Abrir Chat do Escritório (Arraste para mover)"
-        >
-          <MessageCircle size={22} style={{ flexShrink: 0 }} />
-          {/* Subtle glowing badge */}
-          <span style={{
-            position: "absolute",
-            top: "2px",
-            right: "2px",
-            width: "12px",
-            height: "12px",
-            borderRadius: "50%",
-            backgroundColor: "#fbbf24",
-            border: "2px solid #2563eb",
-            boxShadow: "0 0 8px #fbbf24"
-          }} className="anim-pulse" />
-        </button>
-      )}
-
-      {/* Expanded Chat Modal - Anchored Bottom Right & Draggable */}
+      {/* Expanded Chat Modal - Centered Windows-style popup */}
       {isChatOpen && (
-        <div
-          className="chat-panel-modal"
-          style={{
-            position: "fixed",
-            right: `${coords.x}px`,
-            bottom: `${coords.y}px`,
-            left: "auto",
-            top: "auto",
-            zIndex: 50,
-            display: "flex",
-            flexDirection: "column",
-            borderRadius: "var(--r-xl)",
-            boxShadow: "0 20px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(59, 130, 246, 0.1)",
-            overflow: "hidden",
-            transition: dragging ? "none" : "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-            width: isMaximized ? "720px" : "380px",
-            height: isMaximized ? "580px" : "500px",
-            maxWidth: "calc(100vw - 48px)",
-            maxHeight: "calc(100vh - 120px)",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
-            background: "rgba(4, 7, 13, 0.82)",
-            backdropFilter: "blur(40px)",
-            WebkitBackdropFilter: "blur(40px)",
-          }}
-        >
+        <div className={`chat-panel-modal ${isMaximized ? "maximized" : ""}`}>
           {/* Main Container Grid */}
           <div style={{
             flex: 1,
@@ -722,10 +552,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = () => {
               background: "transparent"
             }}>
               
-              {/* Chat Header - Drag Handle */}
+              {/* Chat Header */}
               <div 
-                onMouseDown={startDrag}
-                onTouchStart={startDrag}
                 style={{
                   height: "52px",
                   borderBottom: "1px solid rgba(255, 255, 255, 0.06)",
@@ -734,7 +562,6 @@ export const ChatPanel: React.FC<ChatPanelProps> = () => {
                   alignItems: "center",
                   justifyContent: "space-between",
                   flexShrink: 0,
-                  cursor: dragging ? "grabbing" : "grab",
                   userSelect: "none"
                 }}
               >

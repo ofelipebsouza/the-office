@@ -382,26 +382,44 @@ body {
 }
 
 /* ── Chat Panel Mobile Custom Styles ─────────────────────── */
+@keyframes winStartMenuOpen {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 20px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
 .chat-panel-modal {
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease !important;
+  position: fixed !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  bottom: 56px !important; /* Right above the bottom toolbar */
+  top: auto !important;
+  right: auto !important;
+  z-index: 50 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  border-radius: var(--r-xl) !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(59, 130, 246, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background: rgba(4, 7, 13, 0.82) !important;
+  backdrop-filter: blur(40px) !important;
+  -webkit-backdrop-filter: blur(40px) !important;
+  animation: winStartMenuOpen 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transition: opacity 0.2s ease, width 0.3s ease, height 0.3s ease !important;
 }
 
 @media (max-width: 767px) {
   .chat-panel-modal {
-    position: fixed !important;
-    left: 0 !important;
-    right: 0 !important;
-    top: 44px !important; /* Positioned directly under the mobile header */
-    bottom: 0 !important;
-    width: 100% !important;
-    height: calc(100dvh - 44px) !important;
-    max-width: 100% !important;
-    max-height: 100% !important;
-    border-radius: 0 !important;
-    border: none !important;
-    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
-    box-shadow: none !important;
-    background: rgba(5, 8, 16, 0.95) !important;
+    bottom: 72px !important; /* Floating nicely on mobile */
+    width: calc(100% - 24px) !important;
+    height: calc(100dvh - 150px) !important;
+    max-width: 480px !important;
   }
   
   .chat-panel-modal-inner {
@@ -449,6 +467,14 @@ body {
 }
 
 @media (min-width: 768px) {
+  .chat-panel-modal {
+    width: 400px !important;
+    height: 520px !important;
+  }
+  .chat-panel-modal.maximized {
+    width: 720px !important;
+    height: 600px !important;
+  }
   .mobile-only-block {
     display: none !important;
   }
