@@ -240,7 +240,7 @@ export default function App() {
 
   const navItemStyle = (active: boolean) => ({
     display: "flex" as const, flexDirection: "column" as const, alignItems: "center" as const, justifyContent: "center" as const,
-    gap: 3, background: "none", border: "none", cursor: "pointer" as const,
+    gap: 2, background: "none", border: "none", cursor: "pointer" as const,
     color: active ? "#60a5fa" : "var(--text-3)",
     fontSize: 9, fontFamily: "var(--font-ui)", fontWeight: 700,
     letterSpacing: "0.5px", textTransform: "uppercase" as const,
@@ -286,11 +286,10 @@ export default function App() {
         {/* Right controls */}
         <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
           
-          {/* Mobile-only Camera button */}
+          {/* Camera settings button */}
           <button
             onClick={() => toggleHeaderMenu("camera")}
             aria-pressed={activeHeaderMenu === "camera"}
-            className="mobile-only-flex"
             style={{
               width: "32px",
               height: "32px",
@@ -601,7 +600,7 @@ export default function App() {
           {/* Toolbar pinned at bottom */}
           {!cinema && (
             <div className="desktop-only">
-              <Toolbar />
+              <Toolbar leftOpen={leftOpen} setLeftOpen={setLeftOpen} rightOpen={rightOpen} setRightOpen={setRightOpen} />
             </div>
           )}
         </main>

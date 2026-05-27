@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useOfficeStore } from "../store/useOfficeStore";
 import type { RoomId } from "../types/agent";
-import { Briefcase, Users, Coffee, MapPin, Layout, Crosshair, Minimize2, MessageCircle } from "lucide-react";
+import { Briefcase, Users, Coffee, MapPin, Layout, MessageCircle, LayoutDashboard } from "lucide-react";
 
 const ROOM_ICONS: Record<string, React.ReactNode> = {
   recepcao:  <MapPin    size={12} />,
@@ -11,13 +11,20 @@ const ROOM_ICONS: Record<string, React.ReactNode> = {
   lounge:    <Coffee    size={12} />,
 };
 
-export const Toolbar: React.FC = () => {
+interface ToolbarProps {
+  leftOpen: boolean;
+  setLeftOpen: (v: boolean) => void;
+  rightOpen: boolean;
+  setRightOpen: (v: boolean) => void;
+}
+
+export const Toolbar: React.FC<ToolbarProps> = ({ leftOpen, setLeftOpen, rightOpen, setRightOpen }) => {
   const { rooms, selectedRoomId, selectRoom, selectAgent, agents, triggerAgentMove, 
-    cameraAutoFocus, setCameraAutoFocus, resetCamera, isChatOpen, setChatOpen } = useOfficeStore();
+    isChatOpen, setChatOpen } = useOfficeStore();
 
-  const [activeMenu, setActiveMenu] = useState<"salas" | "acoes" | "camera" | null>(null);
+  const [activeMenu, setActiveMenu] = useState<"salas" | "acoes" | null>(null);
 
-  const toggleMenu = (menu: "salas" | "acoes" | "camera") => {
+  const toggleMenu = (menu: "salas" | "acoes") => {
     setActiveMenu(prev => prev === menu ? null : menu);
   };
 
@@ -126,113 +133,105 @@ export const Toolbar: React.FC = () => {
         </div>
       )}
 
-      {activeMenu === "camera" && (
-        <div 
-          style={{ 
-            position: "absolute", bottom: 56, right: "calc(50% - 190px)", 
-            background: "rgba(6, 10, 18, 0.95)", border: "1px solid rgba(255,255,255,0.08)", 
-            borderRadius: "var(--r-md)", padding: "10px", display: "flex", flexDirection: "column", gap: 4, 
-            zIndex: 100, boxShadow: "0 10px 30px rgba(0,0,0,0.6)", minWidth: 150,
-            backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)"
-          }}
-          className="anim-fade-up"
-        >
-          <p className="lbl-micro" style={{ color: "var(--text-3)", padding: "2px 6px 6px", borderBottom: "1px solid rgba(255, 255, 255, 0.05)", marginBottom: 4 }}>Câmera</p>
-          <button 
-            onClick={() => setCameraAutoFocus(!cameraAutoFocus)} 
-            style={{ ...btn(cameraAutoFocus, "#3b82f6"), width: "100%" }}
-          >
-            <Crosshair size={12} className={cameraAutoFocus ? "animate-pulse" : ""} />
-            <span>Foco: {cameraAutoFocus ? "Automático" : "Manual"}</span>
-          </button>
-          <button 
-            onClick={() => runAction(resetCamera)} 
-            style={{ ...btn(false, "#64748b"), width: "100%" }}
-          >
-            <Minimize2 size={12} />
-            <span>Visão Geral</span>
-          </button>
-        </div>
-      )}
-
       {/* Main Taskbar/Toolbar */}
       <nav
         role="toolbar"
         aria-label="Controles do escritório"
         style={{
-          height: 48, flexShrink: 0,
-          display: "flex", alignItems: "center", justifyContent: "center", gap: 12,
+          height: 56, flexShrink: 0,
+          display: "flex", alignItems: "center", justifyContent: "center",
           padding: "0 16px",
           background: "rgba(4,6,14,0.96)",
           backdropFilter: "blur(20px)",
           borderTop: "1px solid rgba(255,255,255,0.06)",
         }}
       >
-        {/* Left triggers: Salas and Ações */}
-        <div style={{ display: "flex", gap: 8 }}>
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(5, 1fr)",
+          width: "100%",
+          maxWidth: "540px",
+          columnGap: "24px",
+          alignItems: "center",
+          justifyItems: "center",
+        }}>
+          
+          {/* Item 1: Salas */}
           <button 
             onClick={() => toggleMenu("salas")} 
             aria-pressed={activeMenu === "salas"}
-            style={btn(activeMenu === "salas", "#3b82f6")}
+            className={`desktop-nav-item ${activeMenu === "salas" ? "active" : ""}`}
           >
-            <MapPin size={12} />
+            <MapPin size={16} />
             <span>Salas</span>
           </button>
 
+          {/* Item 2: Equipe */}
+          <button 
+            onClick={() => setLeftOpen(!leftOpen)} 
+            aria-pressed={leftOpen}
+            className={`desktop-nav-item ${leftOpen ? "active" : ""}`}
+          >
+            <Users size={16} />
+            <span>Equipe</span>
+          </button>
+
+          {/* Item 3: Centered highlighted round blue Chat Button */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}>
+            <button
+              onClick={() => setChatOpen(!isChatOpen)}
+              aria-pressed={isChatOpen}
+              style={{
+                width: "36px",
+                height: "36px",
+                borderRadius: "50%",
+                backgroundColor: "#2563eb",
+                border: "1px solid rgba(59,130,246,0.4)",
+                color: "#ffffff",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                boxShadow: "0 4px 14px rgba(37,99,235,0.45)",
+                cursor: "pointer",
+                transition: "all 200ms ease",
+                zIndex: 10,
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#1d4ed8";
+                e.currentTarget.style.transform = "scale(1.08)";
+                e.currentTarget.style.boxShadow = "0 6px 18px rgba(37,99,235,0.6)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "#2563eb";
+                e.currentTarget.style.transform = "scale(1)";
+                e.currentTarget.style.boxShadow = "0 4px 14px rgba(37,99,235,0.45)";
+              }}
+              title="Abrir Chat (Estilo Menu Iniciar)"
+            >
+              <MessageCircle size={18} />
+            </button>
+          </div>
+
+          {/* Item 4: Ações */}
           <button 
             onClick={() => toggleMenu("acoes")} 
             aria-pressed={activeMenu === "acoes"}
-            style={btn(activeMenu === "acoes", "#3b82f6")}
+            className={`desktop-nav-item ${activeMenu === "acoes" ? "active" : ""}`}
           >
-            <Layout size={12} />
+            <Layout size={16} />
             <span>Ações</span>
           </button>
-        </div>
 
-        {/* Center: Centered highlighted round blue Chat Button */}
-        <button
-          onClick={() => setChatOpen(!isChatOpen)}
-          aria-pressed={isChatOpen}
-          style={{
-            width: "36px",
-            height: "36px",
-            borderRadius: "50%",
-            backgroundColor: "#2563eb",
-            border: "1px solid rgba(59,130,246,0.4)",
-            color: "#ffffff",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            boxShadow: "0 4px 14px rgba(37,99,235,0.45)",
-            cursor: "pointer",
-            transition: "all 200ms ease",
-            zIndex: 10,
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = "#1d4ed8";
-            e.currentTarget.style.transform = "scale(1.08)";
-            e.currentTarget.style.boxShadow = "0 6px 18px rgba(37,99,235,0.6)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = "#2563eb";
-            e.currentTarget.style.transform = "scale(1)";
-            e.currentTarget.style.boxShadow = "0 4px 14px rgba(37,99,235,0.45)";
-          }}
-          title="Abrir Chat (Estilo Menu Iniciar)"
-        >
-          <MessageCircle size={18} />
-        </button>
-
-        {/* Right triggers: Câmera */}
-        <div style={{ display: "flex", gap: 8 }}>
+          {/* Item 5: HUD */}
           <button 
-            onClick={() => toggleMenu("camera")} 
-            aria-pressed={activeMenu === "camera"}
-            style={btn(activeMenu === "camera", "#3b82f6")}
+            onClick={() => setRightOpen(!rightOpen)} 
+            aria-pressed={rightOpen}
+            className={`desktop-nav-item ${rightOpen ? "active" : ""}`}
           >
-            <Crosshair size={12} />
-            <span>Câmera</span>
+            <LayoutDashboard size={16} />
+            <span>HUD</span>
           </button>
+
         </div>
       </nav>
     </div>
