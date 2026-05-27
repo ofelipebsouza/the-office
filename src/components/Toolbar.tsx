@@ -23,32 +23,34 @@ export const Toolbar: React.FC = () => {
           onClick={() => setChatOpen(!isChatOpen)}
           aria-pressed={isChatOpen}
           style={{
-            background: "transparent",
-            border: "none",
-            color: "#2563eb", /* highlighted blue icon */
+            width: "48px",
+            height: "48px",
+            borderRadius: "50%",
+            backgroundColor: "#2563eb",
+            border: "1px solid rgba(255, 255, 255, 0.15)",
+            color: "#ffffff",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             cursor: "pointer",
-            transition: "all 150ms ease",
-            padding: "8px",
-            borderRadius: "50%",
+            transition: "all 250ms cubic-bezier(0.4, 0, 0.2, 1)",
             outline: "none",
-            filter: "drop-shadow(0 0 8px rgba(37,99,235,0.4))",
+            boxShadow: "0 8px 24px rgba(37, 99, 235, 0.4)",
+            zIndex: 10,
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.color = "#60a5fa";
-            e.currentTarget.style.transform = "scale(1.15)";
-            e.currentTarget.style.filter = "drop-shadow(0 0 12px rgba(37,99,235,0.6))";
+            e.currentTarget.style.backgroundColor = "#1d4ed8";
+            e.currentTarget.style.transform = "scale(1.1) translateY(-3px)";
+            e.currentTarget.style.boxShadow = "0 12px 32px rgba(37, 99, 235, 0.6)";
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.color = "#2563eb";
-            e.currentTarget.style.transform = "scale(1)";
-            e.currentTarget.style.filter = "drop-shadow(0 0 8px rgba(37,99,235,0.4))";
+            e.currentTarget.style.backgroundColor = "#2563eb";
+            e.currentTarget.style.transform = "scale(1) translateY(0)";
+            e.currentTarget.style.boxShadow = "0 8px 24px rgba(37, 99, 235, 0.4)";
           }}
           title="Abrir Chat"
         >
-          <MessageCircle size={24} />
+          <MessageCircle size={22} />
         </button>
       </nav>
     </div>

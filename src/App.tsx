@@ -676,14 +676,14 @@ export default function App() {
         )}
 
         {/* ─── CENTER: CANVAS + TOOLBAR ───────────────────────────────────── */}
-        <main style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", overflow: "hidden" }} aria-label="Escritório virtual">
+        <main style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", overflow: "hidden", position: "relative" }} aria-label="Escritório virtual">
           {/* Canvas fills all remaining height */}
           <div style={{ flex: 1, minHeight: 0, position: "relative" }}>
             <OfficeCanvas />
           </div>
           {/* Toolbar pinned at bottom */}
           {!cinema && (
-            <div className="desktop-only">
+            <div className="desktop-only" style={{ position: "absolute", bottom: "16px", left: "50%", transform: "translateX(-50%)", zIndex: 40 }}>
               <Toolbar />
             </div>
           )}

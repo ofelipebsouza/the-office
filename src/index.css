@@ -397,7 +397,7 @@ body {
   position: fixed !important;
   left: 50% !important;
   transform: translateX(-50%) !important;
-  bottom: 56px !important; /* Right above the bottom toolbar */
+  bottom: 76px !important; /* Adjusted slightly higher since the FAB is floating at bottom */
   top: auto !important;
   right: auto !important;
   z-index: 50 !important;
@@ -407,9 +407,11 @@ body {
   border-radius: var(--r-xl) !important;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(59, 130, 246, 0.1) !important;
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  background: rgba(4, 7, 13, 0.82) !important;
-  backdrop-filter: blur(40px) !important;
-  -webkit-backdrop-filter: blur(40px) !important;
+  background: rgba(4, 7, 13, 0.55) !important; /* Frosted translucent glass background ("meio transparente") */
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  max-height: calc(100dvh - 96px) !important; /* Responsive height limit */
+  max-width: calc(100vw - 32px) !important; /* Responsive width limit */
   animation: winStartMenuOpen 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   transition: opacity 0.2s ease, width 0.3s ease, height 0.3s ease !important;
 }
