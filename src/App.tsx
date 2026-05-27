@@ -5,7 +5,7 @@ import { AgentPanel } from "./components/AgentPanel";
 import { ChatPanel } from "./components/ChatPanel";
 import { Toolbar } from "./components/Toolbar";
 import {
-  Sparkles, Activity,
+  Sparkles,
   Eye, EyeOff, Video, VideoOff, Shuffle, Award, Play, Shield,
   Coins, BarChart3, Database, Lock, PlusCircle, Users,
   LayoutDashboard, ChevronDown, ChevronUp, MessageCircle,
@@ -97,58 +97,12 @@ export default function App() {
   });
   const countRoomAgents = (roomId: string) => agents.filter(a => a.room === roomId).length;
 
-  // Resizable sidebars state
-  const [leftWidth, setLeftWidth] = useState(220); // Default reduced from 264 to 220
-  const [rightWidth, setRightWidth] = useState(260); // Default reduced from 300 to 260
-  const [isResizing, setIsResizing] = useState(false);
+  // Floating sidebars configuration
+  const leftWidth = 220; // Default reduced from 264 to 220
+  const rightWidth = 260; // Default reduced from 300 to 260
+  const isResizing = false;
 
-  const startLeftResize = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setIsResizing(true);
-    const startX = e.clientX;
-    const startWidth = leftWidth;
 
-    const handleMouseMove = (moveEvent: MouseEvent) => {
-      const deltaX = moveEvent.clientX - startX;
-      const newWidth = Math.min(Math.max(startWidth + deltaX, 190), 340);
-      setLeftWidth(newWidth);
-    };
-
-    const handleMouseUp = () => {
-      setIsResizing(false);
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
-      document.body.style.cursor = "default";
-    };
-
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
-    document.body.style.cursor = "col-resize";
-  };
-
-  const startRightResize = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setIsResizing(true);
-    const startX = e.clientX;
-    const startWidth = rightWidth;
-
-    const handleMouseMove = (moveEvent: MouseEvent) => {
-      const deltaX = moveEvent.clientX - startX;
-      const newWidth = Math.min(Math.max(startWidth - deltaX, 210), 380);
-      setRightWidth(newWidth);
-    };
-
-    const handleMouseUp = () => {
-      setIsResizing(false);
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
-      document.body.style.cursor = "default";
-    };
-
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
-    document.body.style.cursor = "col-resize";
-  };
 
   // Auto-open mobile panel when selecting an agent
   useEffect(() => {
@@ -249,7 +203,7 @@ export default function App() {
   });
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100dvh", background: "var(--bg-base)", overflow: "hidden", fontFamily: "var(--font-body)" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100dvh", background: "var(--bg-base)", overflow: "hidden", fontFamily: "var(--font-body)", paddingTop: cinema ? "0px" : "64px" }}>
 
       {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
           HEADER
@@ -258,9 +212,17 @@ export default function App() {
         className="app-header"
         style={{
           height: `${HEADER_H}px`,
-          flexShrink: 0,
           display: cinema ? "none" : undefined,
-          zIndex: 30,
+          position: "absolute",
+          top: "10px",
+          left: "10px",
+          right: "10px",
+          borderRadius: "12px",
+          border: "1px solid rgba(255, 255, 255, 0.08)",
+          background: "rgba(4, 7, 13, 0.22)",
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+          zIndex: 50,
         }}
         aria-label="Barra de navegação"
       >
@@ -273,13 +235,6 @@ export default function App() {
             <p className="lbl-caps" style={{ color: "var(--text-1)", fontSize: 10.5, lineHeight: 1.15 }}>The Office · AI Workspace</p>
             <p className="lbl-micro" style={{ color: "var(--text-3)", marginTop: 1, fontSize: 8 }}>Agentes Autônomos em Tempo Real</p>
           </div>
-        </div>
-
-        {/* Center pill (hidden on mobile) */}
-        <div style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)", borderRadius: 8, padding: "4px 8px" }} className="hidden-mobile">
-          <Activity size={11} color="#34d399" />
-          <span className="lbl-micro" style={{ color: "#34d399" }}>Rede Estável</span>
-          <span className="sdot s-working anim-pulse-dot" />
         </div>
 
         {/* Right controls */}
@@ -561,23 +516,34 @@ export default function App() {
       {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
           MAIN WORKSPACE ROW (flex-1, contains sidebars + canvas)
           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <div style={{ flex: 1, display: "flex", overflow: "hidden", minHeight: 0 }}>
+      <div style={{ flex: 1, display: "flex", overflow: "hidden", minHeight: 0, position: "relative" }}>
 
         {/* ─── LEFT SIDEBAR ───────────────────────────────────────────────── */}
         <aside
           style={{
+            position: "absolute",
+            top: "10px",
+            left: "10px",
+            bottom: "10px",
             width: `${leftW}px`,
-            flexShrink: 0,
             overflow: "hidden",
-            transition: isResizing ? "none" : "width 0.3s cubic-bezier(0.4,0,0.2,1)",
-            borderRight: leftW > 0 ? "1px solid var(--border)" : "none",
+            transition: isResizing ? "none" : "all 0.3s cubic-bezier(0.4,0,0.2,1)",
+            zIndex: 35,
+            borderRadius: "12px",
+            border: leftW > 0 ? "1px solid rgba(255, 255, 255, 0.08)" : "none",
+            background: "rgba(4, 7, 13, 0.22)",
+            backdropFilter: "blur(20px)",
+            WebkitBackdropFilter: "blur(20px)",
+            opacity: leftW > 0 ? 1 : 0,
+            pointerEvents: leftW > 0 ? "auto" : "none",
+            transform: leftW > 0 ? "translateX(0)" : "translateX(-20px)",
           }}
           aria-label="Departamentos"
           aria-hidden={leftW === 0}
           className="desktop-only"
         >
           {/* Inner resizable container */}
-          <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", background: "rgba(8,11,20,0.92)", overflowY: "auto" }}>
+          <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", background: "transparent", overflowY: "auto" }}>
 
             {/* Sidebar header */}
             <div style={{ padding: "14px 14px 10px", borderBottom: "1px solid var(--border)", flexShrink: 0 }}>
@@ -657,24 +623,6 @@ export default function App() {
           </div>
         </aside>
 
-        {/* LEFT RESIZE HANDLE */}
-        {leftW > 0 && (
-          <div
-            onMouseDown={startLeftResize}
-            style={{
-              width: "4px",
-              cursor: "col-resize",
-              flexShrink: 0,
-              zIndex: 35,
-              background: "transparent",
-              transition: "background 150ms",
-              borderRight: "1px solid var(--border)",
-              position: "relative",
-            }}
-            className="resize-handle"
-          />
-        )}
-
         {/* ─── CENTER: CANVAS + TOOLBAR ───────────────────────────────────── */}
         <main style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", overflow: "hidden", position: "relative" }} aria-label="Escritório virtual">
           {/* Canvas fills all remaining height */}
@@ -689,38 +637,31 @@ export default function App() {
           )}
         </main>
 
-        {/* RIGHT RESIZE HANDLE */}
-        {rightW > 0 && (
-          <div
-            onMouseDown={startRightResize}
-            style={{
-              width: "4px",
-              cursor: "col-resize",
-              flexShrink: 0,
-              zIndex: 35,
-              background: "transparent",
-              transition: "background 150ms",
-              borderLeft: "1px solid var(--border)",
-              position: "relative",
-            }}
-            className="resize-handle"
-          />
-        )}
-
         {/* ─── RIGHT SIDEBAR: HUD / AGENT PANEL ──────────────────────────── */}
         <aside
           style={{
+            position: "absolute",
+            top: "10px",
+            right: "10px",
+            bottom: "10px",
             width: `${rightW}px`,
-            flexShrink: 0,
             overflow: "hidden",
-            transition: isResizing ? "none" : "width 0.3s cubic-bezier(0.4,0,0.2,1)",
-            borderLeft: rightW > 0 ? "1px solid var(--border)" : "none",
+            transition: isResizing ? "none" : "all 0.3s cubic-bezier(0.4,0,0.2,1)",
+            zIndex: 35,
+            borderRadius: "12px",
+            border: rightW > 0 ? "1px solid rgba(255, 255, 255, 0.08)" : "none",
+            background: "rgba(4, 7, 13, 0.22)",
+            backdropFilter: "blur(20px)",
+            WebkitBackdropFilter: "blur(20px)",
+            opacity: rightW > 0 ? 1 : 0,
+            pointerEvents: rightW > 0 ? "auto" : "none",
+            transform: rightW > 0 ? "translateX(0)" : "translateX(20px)",
           }}
           aria-label={selectedAgent ? `Painel — ${selectedAgent.name}` : "Monitor"}
           aria-hidden={rightW === 0}
           className="desktop-only"
         >
-          <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", background: "rgba(8,11,20,0.92)" }}>
+          <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", background: "transparent" }}>
 
             {selectedAgent ? (
               /* Agent Panel */
