@@ -306,17 +306,6 @@ export default function App() {
             <Crosshair size={14} />
           </button>
 
-          {/* Cameras toggle */}
-          <HeaderBtn
-            active={camsOpen}
-            onClick={() => setCamsOpen(v => !v)}
-            aria-label={camsOpen ? "Ocultar câmeras" : "Exibir câmeras"}
-            aria-expanded={camsOpen}
-            icon={camsOpen ? <Video size={13} /> : <VideoOff size={13} />}
-            label="Câmeras"
-            hideOnMobile
-          />
-
           {/* Salas Toggle (Desktop Only) */}
           <HeaderBtn
             active={activeHeaderMenu === "salas"}
@@ -336,6 +325,39 @@ export default function App() {
             aria-expanded={activeHeaderMenu === "acoes"}
             icon={<Layout size={13} />}
             label="Ações"
+            hideOnMobile
+          />
+
+          {/* Equipe Toggle (Desktop Only) */}
+          <HeaderBtn
+            active={leftOpen}
+            onClick={() => setLeftOpen(v => !v)}
+            aria-label={leftOpen ? "Fechar Equipe" : "Abrir Equipe"}
+            aria-expanded={leftOpen}
+            icon={<Users size={13} />}
+            label="Equipe"
+            hideOnMobile
+          />
+
+          {/* HUD Toggle (Desktop Only) */}
+          <HeaderBtn
+            active={rightOpen}
+            onClick={() => setRightOpen(v => !v)}
+            aria-label={rightOpen ? "Fechar HUD" : "Abrir HUD"}
+            aria-expanded={rightOpen}
+            icon={<LayoutDashboard size={13} />}
+            label="HUD"
+            hideOnMobile
+          />
+
+          {/* Cameras toggle */}
+          <HeaderBtn
+            active={camsOpen}
+            onClick={() => setCamsOpen(v => !v)}
+            aria-label={camsOpen ? "Ocultar câmeras" : "Exibir câmeras"}
+            aria-expanded={camsOpen}
+            icon={camsOpen ? <Video size={13} /> : <VideoOff size={13} />}
+            label="Câmeras"
             hideOnMobile
           />
 
@@ -407,7 +429,7 @@ export default function App() {
         {activeHeaderMenu === "salas" && (
           <div 
             style={{ 
-              position: "absolute", top: HEADER_H + 4, right: "140px", 
+              position: "absolute", top: HEADER_H + 4, right: "330px", 
               background: "rgba(6, 10, 18, 0.95)", border: "1px solid rgba(255,255,255,0.08)", 
               borderRadius: "var(--r-md)", padding: "10px", display: "flex", flexDirection: "column", gap: 4, 
               zIndex: 100, boxShadow: "0 10px 30px rgba(0,0,0,0.6)", minWidth: 160,
@@ -446,7 +468,7 @@ export default function App() {
         {activeHeaderMenu === "acoes" && (
           <div 
             style={{ 
-              position: "absolute", top: HEADER_H + 4, right: "70px", 
+              position: "absolute", top: HEADER_H + 4, right: "260px", 
               background: "rgba(6, 10, 18, 0.95)", border: "1px solid rgba(255,255,255,0.08)", 
               borderRadius: "var(--r-md)", padding: "10px", display: "flex", flexDirection: "column", gap: 4, 
               zIndex: 100, boxShadow: "0 10px 30px rgba(0,0,0,0.6)", minWidth: 140,
@@ -662,7 +684,7 @@ export default function App() {
           {/* Toolbar pinned at bottom */}
           {!cinema && (
             <div className="desktop-only">
-              <Toolbar leftOpen={leftOpen} setLeftOpen={setLeftOpen} rightOpen={rightOpen} setRightOpen={setRightOpen} />
+              <Toolbar />
             </div>
           )}
         </main>
