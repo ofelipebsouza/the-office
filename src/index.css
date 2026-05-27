@@ -407,9 +407,9 @@ body {
   border-radius: var(--r-xl) !important;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(59, 130, 246, 0.1) !important;
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  background: rgba(4, 7, 13, 0.22) !important; /* Frosted translucent glass background ("meio transparente") */
-  backdrop-filter: blur(20px) !important;
-  -webkit-backdrop-filter: blur(20px) !important;
+  background: rgba(10, 14, 26, 0.72) !important; /* Premium dark frosted glass background */
+  backdrop-filter: blur(24px) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
   max-height: calc(100dvh - 96px) !important; /* Responsive height limit */
   max-width: calc(100vw - 32px) !important; /* Responsive width limit */
   animation: winStartMenuOpen 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
