@@ -50,39 +50,35 @@ export const Toolbar: React.FC<ToolbarProps> = ({ leftOpen, setLeftOpen, rightOp
             <span>Equipe</span>
           </button>
 
-          {/* Item 3: Centered highlighted round blue Chat Button */}
+          {/* Item 3: Centered transparent Chat Button (only desktop) */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}>
             <button
               onClick={() => setChatOpen(!isChatOpen)}
               aria-pressed={isChatOpen}
               style={{
-                width: "36px",
-                height: "36px",
-                borderRadius: "50%",
-                backgroundColor: "#2563eb",
-                border: "1px solid rgba(59,130,246,0.4)",
-                color: "#ffffff",
+                background: "transparent",
+                border: "none",
+                color: isChatOpen ? "#60a5fa" : "var(--text-3)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                boxShadow: "0 4px 14px rgba(37,99,235,0.45)",
                 cursor: "pointer",
-                transition: "all 200ms ease",
-                zIndex: 10,
+                transition: "all 150ms ease",
+                padding: "8px",
+                borderRadius: "50%",
+                outline: "none",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#1d4ed8";
-                e.currentTarget.style.transform = "scale(1.08)";
-                e.currentTarget.style.boxShadow = "0 6px 18px rgba(37,99,235,0.6)";
+                e.currentTarget.style.color = "var(--text-2)";
+                e.currentTarget.style.transform = "scale(1.1)";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "#2563eb";
+                e.currentTarget.style.color = isChatOpen ? "#60a5fa" : "var(--text-3)";
                 e.currentTarget.style.transform = "scale(1)";
-                e.currentTarget.style.boxShadow = "0 4px 14px rgba(37,99,235,0.45)";
               }}
-              title="Abrir Chat (Estilo Menu Iniciar)"
+              title="Abrir Chat"
             >
-              <MessageCircle size={18} />
+              <MessageCircle size={20} />
             </button>
           </div>
 
