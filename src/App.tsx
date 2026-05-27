@@ -6,7 +6,6 @@ import { ChatPanel } from "./components/ChatPanel";
 import { Toolbar } from "./components/Toolbar";
 import {
   Sparkles, Activity,
-  PanelLeftClose, PanelLeft, PanelRightClose, PanelRight,
   Eye, EyeOff, Video, VideoOff, Shuffle, Award, Play, Shield,
   Coins, BarChart3, Database, Lock, PlusCircle, Users,
   LayoutDashboard, ChevronDown, ChevronUp, MessageCircle,
@@ -318,25 +317,25 @@ export default function App() {
             hideOnMobile
           />
 
-          {/* Left sidebar */}
+          {/* Salas Toggle (Desktop Only) */}
           <HeaderBtn
-            active={leftOpen}
-            onClick={() => setLeftOpen(v => !v)}
-            aria-label={leftOpen ? "Fechar sidebar" : "Abrir departamentos"}
-            aria-expanded={leftOpen}
-            icon={leftOpen ? <PanelLeftClose size={13} /> : <PanelLeft size={13} />}
-            label="Depts"
+            active={activeHeaderMenu === "salas"}
+            onClick={() => toggleHeaderMenu("salas")}
+            aria-label="Selecionar Sala"
+            aria-expanded={activeHeaderMenu === "salas"}
+            icon={<MapPin size={13} />}
+            label="Salas"
             hideOnMobile
           />
 
-          {/* Right sidebar */}
+          {/* Ações Toggle (Desktop Only) */}
           <HeaderBtn
-            active={rightOpen}
-            onClick={() => setRightOpen(v => !v)}
-            aria-label={rightOpen ? "Fechar monitor" : "Abrir monitor"}
-            aria-expanded={rightOpen}
-            icon={rightOpen ? <PanelRightClose size={13} /> : <PanelRight size={13} />}
-            label="Monitor"
+            active={activeHeaderMenu === "acoes"}
+            onClick={() => toggleHeaderMenu("acoes")}
+            aria-label="Ações Coletivas"
+            aria-expanded={activeHeaderMenu === "acoes"}
+            icon={<Layout size={13} />}
+            label="Ações"
             hideOnMobile
           />
 
@@ -401,6 +400,69 @@ export default function App() {
             >
               <Minimize2 size={12} />
               <span>Visão Geral</span>
+            </button>
+          </div>
+        )}
+
+        {activeHeaderMenu === "salas" && (
+          <div 
+            style={{ 
+              position: "absolute", top: HEADER_H + 4, right: "140px", 
+              background: "rgba(6, 10, 18, 0.95)", border: "1px solid rgba(255,255,255,0.08)", 
+              borderRadius: "var(--r-md)", padding: "10px", display: "flex", flexDirection: "column", gap: 4, 
+              zIndex: 100, boxShadow: "0 10px 30px rgba(0,0,0,0.6)", minWidth: 160,
+              backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)"
+            }}
+            className="anim-fade-up"
+          >
+            <p className="lbl-micro" style={{ color: "var(--text-3)", padding: "2px 6px 6px", borderBottom: "1px solid rgba(255,255,255,0.05)", marginBottom: 4 }}>Salas</p>
+            <button onClick={() => { selectRoom(null); selectAgent(null); setActiveHeaderMenu(null); }} style={{ ...headerMenuBtnStyle(selectedRoomId === null, "#3b82f6"), width: "100%", justifyContent: "flex-start" }}>
+              <span>Geral (Visão Global)</span>
+            </button>
+            {rooms.map(room => {
+              const sel = selectedRoomId === room.id;
+              const n   = countRoomAgents(room.id);
+              return (
+                <button
+                  key={room.id}
+                  onClick={() => { selectRoom(room.id as RoomId); selectAgent(null); setActiveHeaderMenu(null); }}
+                  style={{ ...headerMenuBtnStyle(sel, "#3b82f6"), width: "100%", justifyContent: "space-between" }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    {ROOM_ICONS[room.id] ?? null}
+                    <span>{room.name}</span>
+                  </div>
+                  {n > 0 && (
+                    <span style={{ fontSize: 9, fontWeight: 900, padding: "1px 5px", borderRadius: 4, background: sel ? "rgba(59,130,246,0.3)" : "rgba(255,255,255,0.08)", color: sel ? "#bfdbfe" : "var(--text-3)" }}>
+                      {n}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {activeHeaderMenu === "acoes" && (
+          <div 
+            style={{ 
+              position: "absolute", top: HEADER_H + 4, right: "70px", 
+              background: "rgba(6, 10, 18, 0.95)", border: "1px solid rgba(255,255,255,0.08)", 
+              borderRadius: "var(--r-md)", padding: "10px", display: "flex", flexDirection: "column", gap: 4, 
+              zIndex: 100, boxShadow: "0 10px 30px rgba(0,0,0,0.6)", minWidth: 140,
+              backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)"
+            }}
+            className="anim-fade-up"
+          >
+            <p className="lbl-micro" style={{ color: "var(--text-3)", padding: "2px 6px 6px", borderBottom: "1px solid rgba(255,255,255,0.05)", marginBottom: 4 }}>Ações Coletivas</p>
+            <button onClick={() => runHeaderAction(voltarAoTrabalho)} style={{ ...headerMenuBtnStyle(false, "#10b981"), width: "100%" }}>
+              <Briefcase size={12} /> <span>Trabalhar</span>
+            </button>
+            <button onClick={() => runHeaderAction(convocarReuniao)} style={{ ...headerMenuBtnStyle(false, "#06b6d4"), width: "100%" }}>
+              <Users size={12} /> <span>Reunião</span>
+            </button>
+            <button onClick={() => runHeaderAction(horaDoCafe)} style={{ ...headerMenuBtnStyle(false, "#818cf8"), width: "100%" }}>
+              <Coffee size={12} /> <span>Hora do Café</span>
             </button>
           </div>
         )}
