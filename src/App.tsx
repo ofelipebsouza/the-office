@@ -8,7 +8,7 @@ import {
   Sparkles,
   Eye, EyeOff, Video, VideoOff, Shuffle, Award, Play, Shield,
   Coins, BarChart3, Database, Lock, PlusCircle, Users,
-  LayoutDashboard, ChevronDown, ChevronUp, MessageCircle,
+  LayoutDashboard, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, MessageCircle,
   Briefcase, Coffee, MapPin, Layout, Crosshair, Minimize2,
 } from "lucide-react";
 import { Crown, Megaphone, Coins as PhCoins, Handshake, Cpu as PhCpu } from "@phosphor-icons/react";
@@ -97,10 +97,58 @@ export default function App() {
   });
   const countRoomAgents = (roomId: string) => agents.filter(a => a.room === roomId).length;
 
-  // Floating sidebars configuration
-  const leftWidth = 220; // Default reduced from 264 to 220
-  const rightWidth = 260; // Default reduced from 300 to 260
-  const isResizing = false;
+  // Resizable sidebars state
+  const [leftWidth, setLeftWidth] = useState(220); // Default reduced from 264 to 220
+  const [rightWidth, setRightWidth] = useState(260); // Default reduced from 300 to 260
+  const [isResizing, setIsResizing] = useState(false);
+
+  const startLeftResize = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+    const startX = e.clientX;
+    const startWidth = leftWidth;
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const deltaX = moveEvent.clientX - startX;
+      const newWidth = Math.min(Math.max(startWidth + deltaX, 190), 340);
+      setLeftWidth(newWidth);
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+      document.body.style.cursor = "default";
+    };
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+    document.body.style.cursor = "col-resize";
+  };
+
+  const startRightResize = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+    const startX = e.clientX;
+    const startWidth = rightWidth;
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const deltaX = moveEvent.clientX - startX;
+      const newWidth = Math.min(Math.max(startWidth - deltaX, 210), 380);
+      setRightWidth(newWidth);
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+      document.body.style.cursor = "default";
+    };
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+    document.body.style.cursor = "col-resize";
+  };
 
 
 
@@ -553,6 +601,26 @@ export default function App() {
                     <Users size={13} />
                   </div>
                   <span className="lbl-caps" style={{ color: "var(--text-1)" }}>Departamentos</span>
+                  <button
+                    onClick={() => setLeftOpen(false)}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: "var(--text-3)",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      padding: "2px",
+                      borderRadius: "4px",
+                      transition: "all 150ms",
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.color = "var(--text-1)"}
+                    onMouseLeave={e => e.currentTarget.style.color = "var(--text-3)"}
+                    title="Minimizar equipe"
+                  >
+                    <ChevronLeft size={14} />
+                  </button>
                 </div>
                 <span className="lbl-micro" style={{ color: "var(--text-3)", background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", padding: "3px 7px", borderRadius: 6 }}>
                   {activeAgents} ativos
@@ -621,6 +689,26 @@ export default function App() {
               </div>
             </div>
           </div>
+
+          {/* RESIZE HANDLE */}
+          {leftW > 0 && (
+            <div
+              onMouseDown={startLeftResize}
+              style={{
+                position: "absolute",
+                top: 0,
+                right: 0,
+                width: "6px",
+                height: "100%",
+                cursor: "col-resize",
+                zIndex: 40,
+                background: "transparent",
+                transition: "background 150ms",
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.05)"}
+              onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+            />
+          )}
         </aside>
 
         {/* ─── CENTER: CANVAS + TOOLBAR ───────────────────────────────────── */}
@@ -666,13 +754,35 @@ export default function App() {
             {selectedAgent ? (
               /* Agent Panel */
               <div className="anim-slide-in" style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" }}>
-                <AgentPanel />
+                <AgentPanel onMinimize={() => setRightOpen(false)} />
               </div>
             ) : (
               /* HUD */
               <>
                 <div style={{ padding: "14px 14px 10px", borderBottom: "1px solid var(--border)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <span className="lbl-caps" style={{ color: "var(--text-1)" }}>Monitor</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span className="lbl-caps" style={{ color: "var(--text-1)" }}>Monitor</span>
+                    <button
+                      onClick={() => setRightOpen(false)}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: "var(--text-3)",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        padding: "2px",
+                        borderRadius: "4px",
+                        transition: "all 150ms",
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.color = "var(--text-1)"}
+                      onMouseLeave={e => e.currentTarget.style.color = "var(--text-3)"}
+                      title="Minimizar HUD"
+                    >
+                      <ChevronRight size={14} />
+                    </button>
+                  </div>
                   {activeJobs > 0 && (
                     <span className="lbl-micro anim-pulse-dot" style={{ color: "#fbbf24", background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.3)", padding: "3px 8px", borderRadius: 6 }}>
                       {activeJobs} job ativo
@@ -723,6 +833,26 @@ export default function App() {
               </>
             )}
           </div>
+
+          {/* RESIZE HANDLE */}
+          {rightW > 0 && (
+            <div
+              onMouseDown={startRightResize}
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "6px",
+                height: "100%",
+                cursor: "col-resize",
+                zIndex: 40,
+                background: "transparent",
+                transition: "background 150ms",
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.05)"}
+              onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+            />
+          )}
         </aside>
 
       </div>{/* end main row */}

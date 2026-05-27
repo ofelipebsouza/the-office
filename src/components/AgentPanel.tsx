@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useOfficeStore } from "../store/useOfficeStore";
 import type { AgentStatus, RoomId } from "../types/agent";
-import { Terminal, Cpu, User, Coffee, Briefcase, Users, X, CheckCircle2, Circle, ArrowRight, MessageSquare, Send } from "lucide-react";
+import { Terminal, Cpu, User, Coffee, Briefcase, Users, X, CheckCircle2, Circle, ArrowRight, MessageSquare, Send, ChevronRight } from "lucide-react";
 
 const STATUS_META: Record<AgentStatus, { label: string; dot: string; color: string }> = {
   working:  { label: "Trabalhando", dot: "s-working",  color: "#10b981" },
@@ -29,7 +29,11 @@ function logColor(log: string) {
   return "#34d399";
 }
 
-export const AgentPanel: React.FC = () => {
+interface AgentPanelProps {
+  onMinimize?: () => void;
+}
+
+export const AgentPanel: React.FC<AgentPanelProps> = ({ onMinimize }) => {
   const { agents, selectedAgentId, rooms, triggerAgentMove, addChatMessage, updateAgentStatus, addAgentLog } = useOfficeStore();
   const consoleRef = useRef<HTMLDivElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -215,6 +219,28 @@ export const AgentPanel: React.FC = () => {
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                 <h3 style={{ fontSize: 13, fontWeight: 700, color: "var(--text-1)", fontFamily: "var(--font-ui)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{agent.name}</h3>
+                {onMinimize && (
+                  <button
+                    onClick={onMinimize}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: "var(--text-3)",
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      padding: "2px",
+                      borderRadius: "4px",
+                      transition: "all 150ms",
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.color = "var(--text-1)"}
+                    onMouseLeave={e => e.currentTarget.style.color = "var(--text-3)"}
+                    title="Minimizar HUD"
+                  >
+                    <ChevronRight size={14} />
+                  </button>
+                )}
                 <span style={{ display: "flex", alignItems: "center", gap: 4, background: `${meta.color}12`, border: `1px solid ${meta.color}30`, padding: "2px 6px", borderRadius: 6 }}>
                   <span className={`sdot ${meta.dot}`} />
                   <span className="lbl-micro" style={{ color: meta.color }}>{meta.label}</span>
